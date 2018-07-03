@@ -14,18 +14,7 @@
  * limitations under the License.
  */
 
-package cz.jtek.hackernewsclient.ui;
+package cz.jtek.hackernewsclient.model;
 
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-
-import cz.jtek.hackernewsclient.R;
-
-public class StoriesListActivity extends AppCompatActivity {
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_stories_list);
-    }
+public class HackerNewsApi {
 }
