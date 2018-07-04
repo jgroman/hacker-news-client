@@ -17,4 +17,15 @@
 package cz.jtek.hackernewsclient.model;
 
 public class HackerNewsApi {
+
+    // API docs: https://github.com/HackerNews/API
+
+    @SuppressWarnings("unused")
+    private static final String TAG = HackerNewsApi.class.getSimpleName();
+
+    private static final String API_SCHEME = "https";
+    private static final String API_AUTHORITY = "hacker-news.firebaseio.com";
+    private static final String API_VERSION = "v0";
+
+
 }

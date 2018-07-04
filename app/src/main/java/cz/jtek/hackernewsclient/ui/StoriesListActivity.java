@@ -23,6 +23,9 @@ import cz.jtek.hackernewsclient.R;
 
 public class StoriesListActivity extends AppCompatActivity {
 
+    @SuppressWarnings("unused")
+    private static final String TAG = StoriesListActivity.class.getSimpleName();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
