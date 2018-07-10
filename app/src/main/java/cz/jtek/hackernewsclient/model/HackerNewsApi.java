@@ -17,9 +17,14 @@
 package cz.jtek.hackernewsclient.model;
 
 import android.net.Uri;
+import android.util.Log;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 public class HackerNewsApi {
 
@@ -95,4 +100,36 @@ public class HackerNewsApi {
         }
     }
 
+    public static HackerNewsJsonResult<ArrayList<Item>> getItemsFromJson(String itemsJsonString) {
+        try {
+            ArrayList<Item> items = Item.fromJson(new JSONArray(itemsJsonString));
+            return new HackerNewsJsonResult<>(items, null);
+        } catch (JSONException jex) {
+            Log.e(TAG, String.format("JSON Exception parsing Hacker News server reply: %s", jex.getMessage()));
+            return new HackerNewsJsonResult<>(null, jex);
+        }
+    }
+
+    /**
+     * JSON result wrapper
+     * Allows returning either result or exception
+     *
+     * @param <T> Result type
+     */
+    public static class HackerNewsJsonResult<T> {
+        private final T result;
+        private final Exception exception;
+
+        HackerNewsJsonResult(T result, Exception exception) {
+            this.result = result;
+            this.exception = exception;
+        }
+
+        public T getResult() { return result; }
+
+        public Exception getException() { return exception; }
+
+        // Checks whether instance contains an exception
+        public boolean hasException() { return exception != null; }
+    }
 }
