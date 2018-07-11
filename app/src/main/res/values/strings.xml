@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Hacker News Client</string>
+
+    <!-- Story types -->
+    <string name="story_title_new">New</string>
+    <string name="story_string_new" translatable="false">new</string>
+    <string name="story_title_best">Best</string>
+    <string name="story_string_best" translatable="false">best</string>
+
+
 </resources>
