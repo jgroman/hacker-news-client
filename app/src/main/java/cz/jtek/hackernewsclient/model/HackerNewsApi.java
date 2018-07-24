@@ -48,6 +48,11 @@ public class HackerNewsApi {
 
     private static final String API_PATH_ITEM  = "item";
 
+    /**
+     *
+     * @param storyType
+     * @return
+     */
     public static URL buildStoriesUrl(String storyType) {
 
         Uri.Builder uriBuilder = new Uri.Builder();
@@ -81,6 +86,11 @@ public class HackerNewsApi {
         }
     }
 
+    /**
+     *
+     * @param itemId
+     * @return
+     */
     public static URL buildItemUrl(long itemId) {
 
         Uri.Builder uriBuilder = new Uri.Builder();
@@ -100,12 +110,39 @@ public class HackerNewsApi {
         }
     }
 
+    /**
+     *
+     * @param storiesJsonString
+     * @return
+     */
+    public static HackerNewsJsonResult<long[]> getStoriesFromJson(String storiesJsonString) {
+        long[] stories;
+
+        try {
+            JSONArray ja = new JSONArray(storiesJsonString);
+            stories = new long[ja.length()];
+            for (int i = 0; i < ja.length(); ++i) {
+                stories[i] = ja.optLong(i);
+            }
+            return new HackerNewsJsonResult<>(stories, null);
+        }
+        catch (JSONException jex) {
+            Log.e(TAG, String.format("JSON Exception parsing Hacker News stories: %s", jex.getMessage()));
+            return new HackerNewsJsonResult<>(null, jex);
+        }
+    }
+
+    /**
+     *
+     * @param itemsJsonString
+     * @return
+     */
     public static HackerNewsJsonResult<ArrayList<Item>> getItemsFromJson(String itemsJsonString) {
         try {
             ArrayList<Item> items = Item.fromJson(new JSONArray(itemsJsonString));
             return new HackerNewsJsonResult<>(items, null);
         } catch (JSONException jex) {
-            Log.e(TAG, String.format("JSON Exception parsing Hacker News server reply: %s", jex.getMessage()));
+            Log.e(TAG, String.format("JSON Exception parsing Hacker News item: %s", jex.getMessage()));
             return new HackerNewsJsonResult<>(null, jex);
         }
     }

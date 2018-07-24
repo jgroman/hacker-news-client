@@ -16,6 +16,7 @@
 
 package cz.jtek.hackernewsclient.ui;
 
+import android.content.Context;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -42,7 +43,7 @@ public class StoryListActivity extends AppCompatActivity
         ViewPager viewPager = findViewById(R.id.viewpager_story_type);
         AppBarLayout appbarLayout = findViewById(R.id.appbar_stories_list);
 
-        viewPager.setAdapter(new StoryTypeTabsAdapter(getSupportFragmentManager()));
+        viewPager.setAdapter(new StoryTypeTabsAdapter(getSupportFragmentManager(), this));
         tabLayout.setupWithViewPager(viewPager);
     }
 
@@ -52,25 +53,30 @@ public class StoryListActivity extends AppCompatActivity
     }
 
     private static class StoryTypeTabsAdapter extends FragmentPagerAdapter {
-        private static final int TAB_COUNT = 2;
+        String[] mTabTitleArray;
+        String[] mTabStringArray;
+        int mTabCount;
 
-        StoryTypeTabsAdapter(FragmentManager fm) {
+        StoryTypeTabsAdapter(FragmentManager fm, Context context) {
             super(fm);
+            mTabTitleArray = context.getResources().getStringArray(R.array.story_type_titles);
+            mTabStringArray = context.getResources().getStringArray(R.array.story_type_strings);
+            mTabCount = mTabTitleArray.length;
         }
 
         @Override
         public int getCount() {
-            return TAB_COUNT;
+            return mTabCount;
         }
 
         @Override
         public Fragment getItem(int i) {
-            return StoryListFragment.newInstance("test");
+            return StoryListFragment.newInstance(mTabStringArray[i]);
         }
 
         @Override
         public CharSequence getPageTitle(int position) {
-            return "Tab " + String.valueOf(position);
+            return mTabTitleArray[position];
         }
     }
 }

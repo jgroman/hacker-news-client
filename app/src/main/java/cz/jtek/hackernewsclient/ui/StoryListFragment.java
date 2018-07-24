@@ -17,20 +17,27 @@
 package cz.jtek.hackernewsclient.ui;
 
 import android.app.Activity;
+import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 
 import cz.jtek.hackernewsclient.R;
+import cz.jtek.hackernewsclient.model.HackerNewsApi;
 import cz.jtek.hackernewsclient.model.Item;
+import cz.jtek.hackernewsclient.utils.NetworkUtils;
+import cz.jtek.hackernewsclient.utils.NetworkUtils.AsyncTaskResult;
 
 public class StoryListFragment extends Fragment
     implements StoryListAdapter.StoryListOnClickListener {
@@ -59,6 +66,7 @@ public class StoryListFragment extends Fragment
     OnStoryClickListener mStoryClickListenerCallback;
 
     public static Fragment newInstance(@NonNull String storyType) {
+        Log.d(TAG, "*** StoryListFragment newInstance " + storyType);
         Bundle arguments = new Bundle();
         arguments.putString(BUNDLE_STORY_TYPE, storyType);
         StoryListFragment fragment = new StoryListFragment();
@@ -104,6 +112,8 @@ public class StoryListFragment extends Fragment
                 mStoryType = args.getString(BUNDLE_STORY_TYPE);
             }
 
+            Log.d(TAG, "*** StoryListFragment onCreateView " + mStoryType);
+
             // TODO Get story list using loader
         }
 
@@ -131,5 +141,56 @@ public class StoryListFragment extends Fragment
     @Override
     public void onClick(int position) {
         mStoryClickListenerCallback.onStorySelected(position);
+    }
+
+    /**
+     *
+     */
+    public static class StoryListLoader
+        extends AsyncTaskLoader<AsyncTaskResult<long[]>> {
+
+        String mStoryType;
+        AsyncTaskResult<long[]> mResult;
+
+        private StoryListLoader(Context context, String storyType) {
+            super(context);
+            mStoryType = storyType;
+        }
+
+        @Override
+        protected void onStartLoading() {
+            if (mResult != null && (mResult.hasResult() || mResult.hasException())) {
+                // If there are already data available, deliver them
+                deliverResult(mResult);
+            } else {
+                // Start loader
+                forceLoad();
+            }
+        }
+
+        @Override
+        public AsyncTaskResult<long[]> loadInBackground() {
+            try {
+                // Example mock request used for debugging to avoid sending network queries
+                //String jsonStoryList = MockDataUtils.getMockJson(getContext(), "top");
+
+                // Load story list JSON
+                URL storiesUrl = HackerNewsApi.buildStoriesUrl(mStoryType);
+                String jsonStoryList = NetworkUtils.getResponseFromHttpUrl(storiesUrl);
+
+                HackerNewsApi.HackerNewsJsonResult<long[]> storyListResult =
+                        HackerNewsApi.getStoriesFromJson(jsonStoryList);
+
+                mResult = new AsyncTaskResult<>(storyListResult.getResult(), storyListResult.getException());
+            }
+            catch (IOException iex) {
+                Log.e(TAG, String.format("IOException when fetching API data: %s", iex.getMessage()));
+                mResult = new AsyncTaskResult<>(null, iex);
+            }
+
+            return mResult;
+        }
+
+
     }
 }
