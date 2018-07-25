@@ -61,18 +61,26 @@ public class MockDataUtils {
      * Provides file contents for testing. Mock JSON files are read
      * from /res/raw directory.
      *
-     * @param context    Current context
-     * @param fileName   Name of file to read WITHOUT EXTENSION
+     * @param context     Current context
+     * @param storyType   Story type string
      * @return File contents
      */
-    @SuppressWarnings("unused")
-    public static String getMockJson(Context context, String fileName) throws IOException {
-
+    public static String getMockStoriesJson(Context context, String storyType) throws IOException {
+        String fileName = storyType + "stories";
         InputStream inputStream = context.getResources().openRawResource(
                 context.getResources().getIdentifier(fileName, "raw", context.getPackageName())
         );
-
         return readFile(inputStream);
     }
+
+
+    public static String getMockItemJson(Context context, long itemId) throws IOException {
+        String fileName = "item" + Long.toString(itemId);
+        InputStream inputStream = context.getResources().openRawResource(
+                context.getResources().getIdentifier(fileName, "raw", context.getPackageName())
+        );
+        return readFile(inputStream);
+    }
+
 }
 

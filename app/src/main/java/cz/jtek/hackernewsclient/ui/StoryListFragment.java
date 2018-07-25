@@ -17,12 +17,15 @@
 package cz.jtek.hackernewsclient.ui;
 
 import android.app.Activity;
-import android.content.AsyncTaskLoader;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,6 +39,7 @@ import java.util.ArrayList;
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.model.HackerNewsApi;
 import cz.jtek.hackernewsclient.model.Item;
+import cz.jtek.hackernewsclient.utils.MockDataUtils;
 import cz.jtek.hackernewsclient.utils.NetworkUtils;
 import cz.jtek.hackernewsclient.utils.NetworkUtils.AsyncTaskResult;
 
@@ -52,10 +56,13 @@ public class StoryListFragment extends Fragment
     private static final String KEY_STORY_TYPE = BUNDLE_STORY_TYPE;
     private static final String KEY_STORY_LIST = "story-list";
 
+
     private Context mContext;
     private String mStoryType;
-    private ArrayList<Item> mStoryList;
+    private long[] mStoryList;
     private RecyclerView mStoryListRecyclerView;
+    private StoryListAdapter mStoryListAdapter;
+    private GridLayoutManager mLayoutManager;
 
     // Custom OnStoryClickListener interface, must be implemented by container activity
     public interface OnStoryClickListener {
@@ -100,10 +107,14 @@ public class StoryListFragment extends Fragment
 
         mStoryListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_story_list, container, false);
 
+        mLayoutManager = new GridLayoutManager(mContext, 1);
+        mStoryListRecyclerView.setLayoutManager(mLayoutManager);
+        mStoryListRecyclerView.setHasFixedSize(true);
+
         if (savedInstanceState != null) {
             // Restoring story type and list from saved instance state
             mStoryType = savedInstanceState.getString(KEY_STORY_TYPE);
-            mStoryList = savedInstanceState.getParcelableArrayList(KEY_STORY_LIST);
+            mStoryList = savedInstanceState.getLongArray(KEY_STORY_LIST);
         }
         else {
             // Get story type from passed arguments
@@ -114,11 +125,20 @@ public class StoryListFragment extends Fragment
 
             Log.d(TAG, "*** StoryListFragment onCreateView " + mStoryType);
 
-            // TODO Get story list using loader
+            // Using loader to obtain recipe list
+            if (NetworkUtils.isNetworkAvailable(mContext)) {
+                // Initialize recipe list loader
+                getLoaderManager().initLoader(LOADER_ID_STORY_LIST, null, storyListLoaderListener);
+            }
+            else {
+                // Network not available, show error message
+                Log.d(TAG, "onCreate: Network not available");
+            }
+
         }
 
-        StoryListAdapter storyListAdapter = new StoryListAdapter(mContext, mStoryList, this );
-        mStoryListRecyclerView.setAdapter(storyListAdapter);
+        mStoryListAdapter = new StoryListAdapter(mContext, mStoryList, this );
+        mStoryListRecyclerView.setAdapter(mStoryListAdapter);
 
         return mStoryListRecyclerView;
     }
@@ -128,7 +148,7 @@ public class StoryListFragment extends Fragment
         // Store story type
         outState.putString(KEY_STORY_TYPE, mStoryType);
         // Store story list
-        outState.putParcelableArrayList(KEY_STORY_LIST, mStoryList);
+        outState.putLongArray(KEY_STORY_LIST, mStoryList);
 
         super.onSaveInstanceState(outState);
     }
@@ -143,53 +163,8 @@ public class StoryListFragment extends Fragment
         mStoryClickListenerCallback.onStorySelected(position);
     }
 
-    /**
-     *
-     */
-    public static class StoryListLoader
-        extends AsyncTaskLoader<AsyncTaskResult<long[]>> {
 
-        String mStoryType;
-        AsyncTaskResult<long[]> mResult;
 
-        private StoryListLoader(Context context, String storyType) {
-            super(context);
-            mStoryType = storyType;
-        }
-
-        @Override
-        protected void onStartLoading() {
-            if (mResult != null && (mResult.hasResult() || mResult.hasException())) {
-                // If there are already data available, deliver them
-                deliverResult(mResult);
-            } else {
-                // Start loader
-                forceLoad();
-            }
-        }
-
-        @Override
-        public AsyncTaskResult<long[]> loadInBackground() {
-            try {
-                // Example mock request used for debugging to avoid sending network queries
-                //String jsonStoryList = MockDataUtils.getMockJson(getContext(), "top");
-
-                // Load story list JSON
-                URL storiesUrl = HackerNewsApi.buildStoriesUrl(mStoryType);
-                String jsonStoryList = NetworkUtils.getResponseFromHttpUrl(storiesUrl);
-
-                HackerNewsApi.HackerNewsJsonResult<long[]> storyListResult =
-                        HackerNewsApi.getStoriesFromJson(jsonStoryList);
-
-                mResult = new AsyncTaskResult<>(storyListResult.getResult(), storyListResult.getException());
-            }
-            catch (IOException iex) {
-                Log.e(TAG, String.format("IOException when fetching API data: %s", iex.getMessage()));
-                mResult = new AsyncTaskResult<>(null, iex);
-            }
-
-            return mResult;
-        }
 
 
     }

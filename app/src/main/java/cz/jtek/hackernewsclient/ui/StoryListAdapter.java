@@ -3,6 +3,7 @@ package cz.jtek.hackernewsclient.ui;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,9 +26,9 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
     private final StoryListOnClickListener mClickListener;
 
     private Context mContext;
-    private ArrayList<Item> mStoryList;
+    private long[] mStoryList;
 
-    StoryListAdapter(Context context, ArrayList<Item> storyList, StoryListOnClickListener clickListener) {
+    StoryListAdapter(Context context, long[] storyList, StoryListOnClickListener clickListener) {
         mContext = context;
         mStoryList = storyList;
         mClickListener = clickListener;
@@ -65,6 +66,7 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
     @NonNull
     @Override
     public StoryListAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        Log.d(TAG, "onCreateViewHolder: ");
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.item_story, parent, false);
         return new ViewHolder(view);
@@ -72,12 +74,13 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull StoryListAdapter.ViewHolder holder, int position) {
-        holder.mStoryTitleTextView.setText(mStoryList.get(position).getTitle());
+        Log.d(TAG, "*** onBindViewHolder: ");
+        holder.mStoryTitleTextView.setText(Long.toString(mStoryList[position]));
     }
 
     @Override
     public int getItemCount() {
         if (mStoryList == null) { return 0; }
-        return mStoryList.size();
+        return mStoryList.length;
     }
 }
