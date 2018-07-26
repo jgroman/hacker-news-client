@@ -21,6 +21,7 @@ import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -131,6 +132,22 @@ public class HackerNewsApi {
             return new HackerNewsJsonResult<>(null, jex);
         }
     }
+
+    /**
+     *
+     * @param itemJsonString
+     * @return
+     */
+    public static HackerNewsJsonResult<Item> getItemFromJson(String itemJsonString) {
+        try {
+            Item item = Item.fromJson(new JSONObject(itemJsonString));
+            return new HackerNewsJsonResult<>(item, null);
+        } catch (JSONException jex) {
+            Log.e(TAG, String.format("JSON Exception parsing Hacker News item: %s", jex.getMessage()));
+            return new HackerNewsJsonResult<>(null, jex);
+        }
+    }
+
 
     /**
      *

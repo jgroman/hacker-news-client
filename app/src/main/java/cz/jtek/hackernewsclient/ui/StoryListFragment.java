@@ -139,7 +139,7 @@ public class StoryListFragment extends Fragment
             Log.d(TAG, "*** StoryListFragment onCreateView full load: " + mStoryType);
         }
 
-        mStoryListAdapter = new StoryListAdapter(mContext, mStoryList, this );
+        mStoryListAdapter = new StoryListAdapter(mContext, mStoryList, this, getLoaderManager() );
         mStoryListRecyclerView.setAdapter(mStoryListAdapter);
 
         return mStoryListRecyclerView;

@@ -81,7 +81,7 @@ public class StoryListActivity extends AppCompatActivity
         for (int i = 0; i < storyTypes.length; i++) {
             Bundle loaderBundle = new Bundle();
             loaderBundle.putString(BUNDLE_STORY_TYPE, storyTypes[i]);
-            getSupportLoaderManager().initLoader(i, loaderBundle, new LoaderListener());
+            getSupportLoaderManager().initLoader(i, loaderBundle, new StoryListLoaderListener());
         }
 
     }
@@ -140,7 +140,7 @@ public class StoryListActivity extends AppCompatActivity
     /**
      *
      */
-    private class LoaderListener implements LoaderManager.LoaderCallbacks<AsyncTaskResult<long[]>> {
+    private class StoryListLoaderListener implements LoaderManager.LoaderCallbacks<AsyncTaskResult<long[]>> {
         private Bundle mArgs;
 
         @NonNull
@@ -235,7 +235,7 @@ public class StoryListActivity extends AppCompatActivity
 
                 mResult = new AsyncTaskResult<>(storyListResult.getResult(), storyListResult.getException());
             } catch (IOException iex) {
-                Log.e(TAG, String.format("IOException when fetching API data: %s", iex.getMessage()));
+                Log.e(TAG, String.format("IOException when fetching API story data: %s", iex.getMessage()));
                 mResult = new AsyncTaskResult<>(null, iex);
             }
 

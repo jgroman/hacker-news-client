@@ -108,7 +108,7 @@ public class Item implements Parcelable {
     }
 
     // Constructor converting JSON object to instance of this class
-    private static Item fromJson(JSONObject jo) {
+    public static Item fromJson(JSONObject jo) {
         Item item = new Item();
 
         item.mId = jo.optLong(ITEM_ID);
