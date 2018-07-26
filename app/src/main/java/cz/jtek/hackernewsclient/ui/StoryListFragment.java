@@ -37,6 +37,8 @@ import android.view.ViewGroup;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Observable;
+import java.util.Observer;
 
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.model.HackerNewsApi;
@@ -59,9 +61,6 @@ public class StoryListFragment extends Fragment
     private static final String KEY_STORY_TYPE = BUNDLE_STORY_TYPE;
     private static final String KEY_STORY_LIST = "story-list";
 
-    // AsyncTaskLoader
-    private static final int LOADER_ID_STORY_LIST = 0;
-
     private Context mContext;
     private String mStoryType;
     private long[] mStoryList;
@@ -77,16 +76,11 @@ public class StoryListFragment extends Fragment
     // This is a callback to onStorySelected in container activity
     OnStoryClickListener mStoryClickListenerCallback;
 
-    public interface OnUpdateListener {
-        void onUpdate();
-    }
-
-    OnUpdateListener mUpdateListenerCallback;
-
-    public static Fragment newInstance(@NonNull String storyType) {
+    public static Fragment newInstance(@NonNull String storyType, long[] storyList) {
         Log.d(TAG, "*** StoryListFragment newInstance " + storyType);
         Bundle arguments = new Bundle();
         arguments.putString(BUNDLE_STORY_TYPE, storyType);
+        arguments.putLongArray(BUNDLE_STORY_LIST, storyList);
         StoryListFragment fragment = new StoryListFragment();
         fragment.setArguments(arguments);
         return fragment;
@@ -105,14 +99,6 @@ public class StoryListFragment extends Fragment
             throw new ClassCastException(context.toString()
                     + " must implement OnStoryClickListener");
         }
-
-        try {
-            mUpdateListenerCallback = (OnUpdateListener) context;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(context.toString()
-                    + " must implement OnUpdateListener");
-        }
-
     }
 
     @Nullable
@@ -134,26 +120,23 @@ public class StoryListFragment extends Fragment
             // Restoring story type and list from saved instance state
             mStoryType = savedInstanceState.getString(KEY_STORY_TYPE);
             mStoryList = savedInstanceState.getLongArray(KEY_STORY_LIST);
+            Log.d(TAG, "*** StoryListFragment onCreateView restoring: " + mStoryType);
         }
         else {
-            // Get story type from passed arguments
+            // Get story type and list from passed arguments
             Bundle args = getArguments();
-            if (args != null && args.containsKey(BUNDLE_STORY_TYPE)) {
-                mStoryType = args.getString(BUNDLE_STORY_TYPE);
+            if (args != null) {
+
+                if (args.containsKey(BUNDLE_STORY_TYPE)) {
+                    mStoryType = args.getString(BUNDLE_STORY_TYPE);
+                }
+
+                if (args.containsKey(BUNDLE_STORY_LIST)) {
+                    mStoryList = args.getLongArray(BUNDLE_STORY_LIST);
+                }
             }
 
-            Log.d(TAG, "*** StoryListFragment onCreateView " + mStoryType);
-
-            // Using loader to obtain recipe list
-            if (NetworkUtils.isNetworkAvailable(mContext)) {
-                // Initialize recipe list loader
-                getLoaderManager().initLoader(LOADER_ID_STORY_LIST, null, storyListLoaderListener);
-            }
-            else {
-                // Network not available, show error message
-                Log.d(TAG, "onCreate: Network not available");
-            }
-
+            Log.d(TAG, "*** StoryListFragment onCreateView full load: " + mStoryType);
         }
 
         mStoryListAdapter = new StoryListAdapter(mContext, mStoryList, this );
@@ -180,108 +163,6 @@ public class StoryListFragment extends Fragment
     @Override
     public void onClick(int position) {
         mStoryClickListenerCallback.onStorySelected(position);
-    }
-
-    /**
-     *
-     */
-    private LoaderManager.LoaderCallbacks<NetworkUtils.AsyncTaskResult<long[]>> storyListLoaderListener =
-            new LoaderManager.LoaderCallbacks<NetworkUtils.AsyncTaskResult<long[]>>() {
-
-                @NonNull
-                @Override
-                public Loader<NetworkUtils.AsyncTaskResult<long[]>> onCreateLoader(int id, @Nullable Bundle args) {
-                    //mLoadingIndicator.setVisibility(View.VISIBLE);
-                    return new StoryListLoader(mContext, mStoryType, true);
-                }
-
-                @Override
-                public void onLoadFinished(@NonNull Loader<NetworkUtils.AsyncTaskResult<long[]>> loader, NetworkUtils.AsyncTaskResult<long[]> data) {
-                    //mLoadingIndicator.setVisibility(View.INVISIBLE);
-
-                    if (data.hasException()) {
-                        // There was an error during data loading
-                        Exception ex = data.getException();
-                        //showErrorMessage(getResources().getString(R.string.error_msg_no_data));
-                    } else {
-                        // Valid results received
-                        mStoryList = data.getResult();
-
-                        // Destroy this loader, otherwise is gets called again during onResume
-                        getLoaderManager().destroyLoader(LOADER_ID_STORY_LIST);
-
-                        mStoryListAdapter.notifyDataSetChanged();
-                        mUpdateListenerCallback.onUpdate();
-                    }
-                }
-
-                @Override
-                public void onLoaderReset(@NonNull Loader<NetworkUtils.AsyncTaskResult<long[]>> loader) {
-                    // Not implemented
-                }
-            };
-
-    /**
-     * Story list async task loader implementation
-     */
-    public static class StoryListLoader
-            extends AsyncTaskLoader<AsyncTaskResult<long[]>> {
-
-        final PackageManager mPackageManager;
-        AsyncTaskResult<long[]> mResult;
-
-        private final String mStoryType;
-        private final boolean mUseMockData;
-
-        private StoryListLoader(Context context, String storyType, boolean useMockData) {
-            super(context);
-            mPackageManager = context.getPackageManager();
-            mStoryType = storyType;
-            mUseMockData = useMockData;
-        }
-
-        @Override
-        protected void onStartLoading() {
-            if (mResult != null && (mResult.hasResult() || mResult.hasException())) {
-                // If there are already data available, deliver them
-                deliverResult(mResult);
-            } else {
-                // Start loader
-                forceLoad();
-            }
-        }
-
-        @Override
-        protected void onStopLoading() {
-            cancelLoad();
-        }
-
-        @Override
-        public AsyncTaskResult<long[]> loadInBackground() {
-            String jsonStoryList;
-
-            try {
-                // Load story list JSON
-                URL storiesUrl = HackerNewsApi.buildStoriesUrl(mStoryType);
-
-                if (mUseMockData) {
-                    // Mock request used for debugging to avoid sending network queries
-                    jsonStoryList = MockDataUtils.getMockStoriesJson(getContext(), mStoryType);
-                } else {
-                    jsonStoryList = NetworkUtils.getResponseFromHttpUrl(storiesUrl);
-                }
-
-                HackerNewsApi.HackerNewsJsonResult<long[]> storyListResult =
-                        HackerNewsApi.getStoriesFromJson(jsonStoryList);
-
-                mResult = new AsyncTaskResult<>(storyListResult.getResult(), storyListResult.getException());
-            } catch (IOException iex) {
-                Log.e(TAG, String.format("IOException when fetching API data: %s", iex.getMessage()));
-                mResult = new AsyncTaskResult<>(null, iex);
-            }
-
-            return mResult;
-        }
     }
 
 }
