@@ -1,5 +1,6 @@
 package cz.jtek.hackernewsclient.ui;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -47,15 +48,13 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
 
     private Context mContext;
     private long[] mStoryList;
-    private LoaderManager mLoaderManager;
+    private StoryListActivity mActivity;
 
-    private LongSparseArray<Item> mItemCache = new LongSparseArray<>();
-
-    StoryListAdapter(Context context, long[] storyList, StoryListOnClickListener clickListener, LoaderManager lm) {
+    StoryListAdapter(Context context, long[] storyList, StoryListOnClickListener clickListener, Activity activity) {
         mContext = context;
         mStoryList = storyList;
         mClickListener = clickListener;
-        mLoaderManager = lm;
+        mActivity =  (StoryListActivity) activity;
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder
@@ -101,14 +100,13 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
         Log.d(TAG, "*** onBindViewHolder: " + mStoryList[position]);
         holder.mStoryTitleTextView.setText(Long.toString(mStoryList[position]));
 
-        if (mItemCache.get(mStoryList[position]) != null) {
+        if ( mActivity.mItemCache.get(mStoryList[position]) != null) {
             // Populate holder from cache
+            holder.mStoryTitleTextView.setText("loaded");
         }
         else {
             // Start item loader
-            Bundle loaderBundle = new Bundle();
-            loaderBundle.putLong(BUNDLE_ITEM_ID, mStoryList[position]);
-            mLoaderManager.initLoader(123, loaderBundle, new ItemLoaderListener());
+            mActivity.startItemLoader(position, mStoryList[position]);
         }
 
     }
@@ -119,101 +117,4 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
         return mStoryList.length;
     }
 
-    /**
-     *
-     */
-    private class ItemLoaderListener implements LoaderManager.LoaderCallbacks<NetworkUtils.AsyncTaskResult<Item>> {
-        private Bundle mArgs;
-
-        @NonNull
-        @Override
-        public Loader<NetworkUtils.AsyncTaskResult<Item>> onCreateLoader(int id, Bundle bundle) {
-            mArgs = bundle;
-            return new ItemLoader(mContext, bundle);
-        }
-
-        @Override
-        public void onLoadFinished(Loader<NetworkUtils.AsyncTaskResult<Item>> loader, NetworkUtils.AsyncTaskResult<Item> itemAsyncTaskResult) {
-            if (itemAsyncTaskResult.hasException()) {
-                // There was an error during data loading
-                Exception ex = itemAsyncTaskResult.getException();
-                //showErrorMessage(getResources().getString(R.string.error_msg_no_data));
-            }
-            else {
-                // Valid results received
-                long itemId = mArgs.getLong(BUNDLE_ITEM_ID);
-                Log.d(TAG, "*** onLoadFinished: loaded for: " + itemId);
-                mItemCache.put(itemId, itemAsyncTaskResult.getResult());
-
-                notifyDataSetChanged();
-
-                // Destroy this loader, otherwise is gets called again during onResume
-                //getLoaderManager().destroyLoader(LOADER_ID_STORY_LIST);
-            }
-
-        }
-
-        @Override
-        public void onLoaderReset(Loader<NetworkUtils.AsyncTaskResult<Item>> loader) {
-            // Not implemented
-        }
-    }
-
-    private static class ItemLoader extends AsyncTaskLoader<NetworkUtils.AsyncTaskResult<Item>> {
-
-        private NetworkUtils.AsyncTaskResult<Item> mResult;
-        private final long mItemId;
-        private final boolean mUseMockData;
-
-        public ItemLoader(@NonNull Context context, Bundle bundle) {
-            super(context);
-            mItemId = bundle.getLong(BUNDLE_ITEM_ID);
-            mUseMockData = true;
-        }
-
-        @Override
-        protected void onStartLoading() {
-            if (mResult != null && (mResult.hasResult() || mResult.hasException())) {
-                // If there are already data available, deliver them
-                deliverResult(mResult);
-            }
-            else {
-                // Start loader
-                forceLoad();
-            }
-        }
-
-        @Override
-        protected void onStopLoading() {
-            cancelLoad();
-        }
-
-        @Nullable
-        @Override
-        public NetworkUtils.AsyncTaskResult<Item> loadInBackground() {
-            String jsonItem;
-
-            try {
-                URL itemUrl = HackerNewsApi.buildItemUrl(mItemId);
-
-                if (mUseMockData) {
-                    // Mock request used for debugging to avoid sending network queries
-                    jsonItem = MockDataUtils.getMockItemJson(getContext(), mItemId);
-                }
-                else {
-                    jsonItem = NetworkUtils.getResponseFromHttpUrl(itemUrl);
-                }
-
-                HackerNewsApi.HackerNewsJsonResult<Item> itemResult = HackerNewsApi.getItemFromJson(jsonItem);
-
-                mResult = new AsyncTaskResult<>(itemResult.getResult(), itemResult.getException());
-            }
-            catch (IOException iex) {
-                Log.e(TAG, String.format("IOException when fetching API item data: %s", iex.getMessage()));
-                mResult = new AsyncTaskResult<>(null, iex);
-            }
-
-            return mResult;
-        }
-    }
 }

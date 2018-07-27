@@ -28,6 +28,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.AsyncTaskLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.util.LongSparseArray;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -39,6 +40,7 @@ import java.util.HashMap;
 
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.model.HackerNewsApi;
+import cz.jtek.hackernewsclient.model.Item;
 import cz.jtek.hackernewsclient.utils.MockDataUtils;
 import cz.jtek.hackernewsclient.utils.NetworkUtils;
 import cz.jtek.hackernewsclient.utils.NetworkUtils.AsyncTaskResult;
@@ -51,8 +53,11 @@ public class StoryListActivity extends AppCompatActivity
 
     // Bundle arguments
     public static final String BUNDLE_STORY_TYPE = "story-type";
+    public static final String BUNDLE_ITEM_ID = "item-id";
+
 
     private HashMap<String, long[]> mStoriesMap = new HashMap<>();
+    public LongSparseArray<Item> mItemCache = new LongSparseArray<>();
 
     private Context mContext;
 
@@ -163,7 +168,7 @@ public class StoryListActivity extends AppCompatActivity
             } else {
                 // Valid results received
                 String storyType = mArgs.getString(BUNDLE_STORY_TYPE);
-                Log.d(TAG, "*** onLoadFinished: loaded for: " + storyType);
+                Log.d(TAG, "*** onLoadFinished: loaded stories for: " + storyType);
                 mStoriesMap.put(storyType, data.getResult());
 
                 mPagerAdapter.notifyDataSetChanged();
@@ -236,6 +241,113 @@ public class StoryListActivity extends AppCompatActivity
                 mResult = new AsyncTaskResult<>(storyListResult.getResult(), storyListResult.getException());
             } catch (IOException iex) {
                 Log.e(TAG, String.format("IOException when fetching API story data: %s", iex.getMessage()));
+                mResult = new AsyncTaskResult<>(null, iex);
+            }
+
+            return mResult;
+        }
+    }
+
+
+    public void startItemLoader(int position, long itemId) {
+        Bundle loaderBundle = new Bundle();
+        loaderBundle.putLong(BUNDLE_ITEM_ID, itemId);
+        getSupportLoaderManager().initLoader(position, loaderBundle, new ItemLoaderListener());
+    }
+
+    /**
+     *
+     */
+    private class ItemLoaderListener implements LoaderManager.LoaderCallbacks<NetworkUtils.AsyncTaskResult<Item>> {
+        private Bundle mArgs;
+
+        @NonNull
+        @Override
+        public Loader<NetworkUtils.AsyncTaskResult<Item>> onCreateLoader(int id, Bundle bundle) {
+            mArgs = bundle;
+            return new ItemLoader(mContext, mArgs);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<NetworkUtils.AsyncTaskResult<Item>> loader, NetworkUtils.AsyncTaskResult<Item> itemAsyncTaskResult) {
+            long itemId = mArgs.getLong(BUNDLE_ITEM_ID);
+            Log.d(TAG, "*** onLoadFinished: loaded item for: " + itemId);
+
+            if (itemAsyncTaskResult.hasException()) {
+                // There was an error during data loading
+                Exception ex = itemAsyncTaskResult.getException();
+                //showErrorMessage(getResources().getString(R.string.error_msg_no_data));
+            }
+            else {
+                // Valid results received
+                mItemCache.put(itemId, itemAsyncTaskResult.getResult());
+
+                mPagerAdapter.notifyDataSetChanged();
+
+                // Destroy this loader, otherwise is gets called again during onResume
+                //getLoaderManager().destroyLoader(LOADER_ID_STORY_LIST);
+            }
+
+        }
+
+        @Override
+        public void onLoaderReset(Loader<NetworkUtils.AsyncTaskResult<Item>> loader) {
+            // Not implemented
+        }
+    }
+
+    private static class ItemLoader extends AsyncTaskLoader<NetworkUtils.AsyncTaskResult<Item>> {
+
+        private NetworkUtils.AsyncTaskResult<Item> mResult;
+        private final long mItemId;
+        private final boolean mUseMockData;
+
+        public ItemLoader(@NonNull Context context, Bundle bundle) {
+            super(context);
+            mItemId = bundle.getLong(BUNDLE_ITEM_ID);
+            mUseMockData = true;
+        }
+
+        @Override
+        protected void onStartLoading() {
+            Log.d(TAG, "***onStartLoading: item " + mItemId);
+            if (mResult != null && (mResult.hasResult() || mResult.hasException())) {
+                // If there are already data available, deliver them
+                deliverResult(mResult);
+            }
+            else {
+                // Start loader
+                forceLoad();
+            }
+        }
+
+        @Override
+        protected void onStopLoading() {
+            cancelLoad();
+        }
+
+        @Nullable
+        @Override
+        public NetworkUtils.AsyncTaskResult<Item> loadInBackground() {
+            String jsonItem;
+
+            try {
+                URL itemUrl = HackerNewsApi.buildItemUrl(mItemId);
+
+                if (mUseMockData) {
+                    // Mock request used for debugging to avoid sending network queries
+                    jsonItem = MockDataUtils.getMockItemJson(getContext(), mItemId);
+                }
+                else {
+                    jsonItem = NetworkUtils.getResponseFromHttpUrl(itemUrl);
+                }
+
+                HackerNewsApi.HackerNewsJsonResult<Item> itemResult = HackerNewsApi.getItemFromJson(jsonItem);
+
+                mResult = new AsyncTaskResult<>(itemResult.getResult(), itemResult.getException());
+            }
+            catch (IOException iex) {
+                Log.e(TAG, String.format("IOException when fetching API item data: %s", iex.getMessage()));
                 mResult = new AsyncTaskResult<>(null, iex);
             }
 

@@ -76,10 +76,15 @@ public class MockDataUtils {
 
     public static String getMockItemJson(Context context, long itemId) throws IOException {
         String fileName = "item" + Long.toString(itemId);
-        InputStream inputStream = context.getResources().openRawResource(
-                context.getResources().getIdentifier(fileName, "raw", context.getPackageName())
-        );
-        return readFile(inputStream);
+        int resourceId = context.getResources().getIdentifier(fileName, "raw", context.getPackageName());
+        if (resourceId > 0) {
+            InputStream inputStream = context.getResources().openRawResource(resourceId);
+            return readFile(inputStream);
+        }
+        else {
+            Log.d(TAG, "*** getMockItemJson: file missing: " + fileName);
+            return "{}";
+        }
     }
 
 }
