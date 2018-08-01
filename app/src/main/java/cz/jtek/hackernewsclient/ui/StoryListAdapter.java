@@ -19,9 +19,11 @@ import android.widget.TextView;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.model.HackerNewsApi;
@@ -61,6 +63,10 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
             implements View.OnClickListener {
 
         final TextView mStoryTitleTextView;
+        final TextView mStoryUrlTextView;
+        final TextView mStoryScoreTextView;
+        final TextView mStoryCommentsTextView;
+
 
         /**
          * View holder constructor
@@ -71,6 +77,9 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
         ViewHolder(View view) {
             super(view);
             mStoryTitleTextView = view.findViewById(R.id.tv_story_title);
+            mStoryUrlTextView = view.findViewById(R.id.tv_story_url);
+            mStoryScoreTextView = view.findViewById(R.id.tv_story_score);
+            mStoryCommentsTextView = view.findViewById(R.id.tv_story_comments);
             view.setOnClickListener(this);
         }
 
@@ -99,12 +108,34 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
         //Log.d(TAG, "*** onBindViewHolder: " + mStoryList[position]);
         holder.mStoryTitleTextView.setText(Long.toString(mStoryList[position]));
 
-        if ( mActivity.mItemCache.get(mStoryList[position]) != null) {
+        Item item = mActivity.mItemCache.get(mStoryList[position]);
+
+        if (item != null) {
             // Populate holder from loader cache
-            String title = mActivity.mItemCache.get(mStoryList[position]).getTitle();
+            // Title
+            String title = item.getTitle();
             if (title != null) {
                 holder.mStoryTitleTextView.setText(title);
             }
+
+            // Host url
+            String urlHost;
+            try {
+                URL url = new URL(item.getURL());
+                urlHost = url.getHost();
+            }
+            catch (MalformedURLException mex) {
+                urlHost = "...";
+            }
+            holder.mStoryUrlTextView.setText(urlHost);
+
+            // Story upvotes
+            int score = item.getScore();
+            holder.mStoryScoreTextView.setText(String.format(Locale.getDefault(),"%d", score));
+
+            // Story comment count
+            int comments = item.getDescendants();
+            holder.mStoryCommentsTextView.setText(String.format(Locale.getDefault(),"%d", comments));
         }
         else {
             // Start item loader

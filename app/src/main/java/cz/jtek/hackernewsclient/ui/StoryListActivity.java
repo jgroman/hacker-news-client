@@ -297,12 +297,13 @@ public class StoryListActivity extends AppCompatActivity
                 Item item = itemAsyncTaskResult.getResult();
                 mItemCache.put(mItemId, item);
 
+                // Refresh pager contents
+                mPagerAdapter.notifyDataSetChanged();
+
                 // Destroy this loader, otherwise is gets called again during onResume
                 //getLoaderManager().destroyLoader(LOADER_ID_STORY_LIST);
             }
 
-            // Refresh pager contents
-            mPagerAdapter.notifyDataSetChanged();
         }
 
         @Override
