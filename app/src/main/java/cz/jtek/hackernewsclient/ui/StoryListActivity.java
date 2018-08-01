@@ -62,7 +62,7 @@ public class StoryListActivity extends AppCompatActivity
     private Context mContext;
 
     private ViewPager mViewPager;
-    private StoryTypeTabsAdapter mPagerAdapter;
+    public StoryTypeTabsAdapter mPagerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,7 +137,7 @@ public class StoryListActivity extends AppCompatActivity
 
         @Override
         public int getItemPosition(Object object) {
-            Log.d(TAG, "*** getItemPosition: ");
+            //Log.d(TAG, "*** getItemPosition: ");
             return POSITION_NONE;
         }
     }
@@ -248,50 +248,65 @@ public class StoryListActivity extends AppCompatActivity
         }
     }
 
+    /**
+     *
+     * @param itemId
+     */
+    public void startItemLoader(long itemId) {
+        // Create temporary item placeholder in cache to prevent multiple loading
+        Item tempItem = new Item();
+        tempItem.setTitle("...");
+        mItemCache.put(itemId, tempItem);
 
-    public void startItemLoader(int position, long itemId) {
         Bundle loaderBundle = new Bundle();
         loaderBundle.putLong(BUNDLE_ITEM_ID, itemId);
-        getSupportLoaderManager().initLoader(position, loaderBundle, new ItemLoaderListener());
+
+        // Init item loader
+        // Quick hack to get unique loader id. Should be OK until HN story id > MAX_INT.
+        getSupportLoaderManager().initLoader((int) itemId, loaderBundle, new ItemLoaderListener());
     }
 
     /**
      *
      */
-    private class ItemLoaderListener implements LoaderManager.LoaderCallbacks<NetworkUtils.AsyncTaskResult<Item>> {
-        private Bundle mArgs;
+    private class ItemLoaderListener
+            implements LoaderManager.LoaderCallbacks<NetworkUtils.AsyncTaskResult<Item>> {
+
+        private long mItemId;
 
         @NonNull
         @Override
         public Loader<NetworkUtils.AsyncTaskResult<Item>> onCreateLoader(int id, Bundle bundle) {
-            mArgs = bundle;
-            return new ItemLoader(mContext, mArgs);
+            mItemId = bundle.getLong(BUNDLE_ITEM_ID);
+            return new ItemLoader(mContext, bundle);
         }
 
         @Override
-        public void onLoadFinished(Loader<NetworkUtils.AsyncTaskResult<Item>> loader, NetworkUtils.AsyncTaskResult<Item> itemAsyncTaskResult) {
-            long itemId = mArgs.getLong(BUNDLE_ITEM_ID);
-            Log.d(TAG, "*** onLoadFinished: loaded item for: " + itemId);
+        public void onLoadFinished(@NonNull Loader<NetworkUtils.AsyncTaskResult<Item>> loader,
+                                   NetworkUtils.AsyncTaskResult<Item> itemAsyncTaskResult) {
+            //long itemId = mArgs.getLong(BUNDLE_ITEM_ID);
 
             if (itemAsyncTaskResult.hasException()) {
                 // There was an error during data loading
                 Exception ex = itemAsyncTaskResult.getException();
+                Log.d(TAG, "*** onLoadFinished: Exception for item: " + mItemId + ", msg: " + ex.getMessage());
                 //showErrorMessage(getResources().getString(R.string.error_msg_no_data));
             }
             else {
                 // Valid results received
-                mItemCache.put(itemId, itemAsyncTaskResult.getResult());
-
-                mPagerAdapter.notifyDataSetChanged();
+                Item item = itemAsyncTaskResult.getResult();
+                mItemCache.put(mItemId, item);
 
                 // Destroy this loader, otherwise is gets called again during onResume
                 //getLoaderManager().destroyLoader(LOADER_ID_STORY_LIST);
             }
 
+            // Refresh pager contents
+            mPagerAdapter.notifyDataSetChanged();
         }
 
         @Override
-        public void onLoaderReset(Loader<NetworkUtils.AsyncTaskResult<Item>> loader) {
+        public void onLoaderReset(@NonNull Loader<NetworkUtils.AsyncTaskResult<Item>> loader) {
             // Not implemented
         }
     }
@@ -302,7 +317,7 @@ public class StoryListActivity extends AppCompatActivity
         private final long mItemId;
         private final boolean mUseMockData;
 
-        public ItemLoader(@NonNull Context context, Bundle bundle) {
+        ItemLoader(@NonNull Context context, Bundle bundle) {
             super(context);
             mItemId = bundle.getLong(BUNDLE_ITEM_ID);
             mUseMockData = true;
@@ -332,18 +347,17 @@ public class StoryListActivity extends AppCompatActivity
             String jsonItem;
 
             try {
-                URL itemUrl = HackerNewsApi.buildItemUrl(mItemId);
-
                 if (mUseMockData) {
                     // Mock request used for debugging to avoid sending network queries
                     jsonItem = MockDataUtils.getMockItemJson(getContext(), mItemId);
                 }
                 else {
+                    URL itemUrl = HackerNewsApi.buildItemUrl(mItemId);
                     jsonItem = NetworkUtils.getResponseFromHttpUrl(itemUrl);
                 }
 
-                HackerNewsApi.HackerNewsJsonResult<Item> itemResult = HackerNewsApi.getItemFromJson(jsonItem);
-
+                HackerNewsApi.HackerNewsJsonResult<Item> itemResult =
+                        HackerNewsApi.getItemFromJson(jsonItem);
                 mResult = new AsyncTaskResult<>(itemResult.getResult(), itemResult.getException());
             }
             catch (IOException iex) {

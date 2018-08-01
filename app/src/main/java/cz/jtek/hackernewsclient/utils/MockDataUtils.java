@@ -67,10 +67,14 @@ public class MockDataUtils {
      */
     public static String getMockStoriesJson(Context context, String storyType) throws IOException {
         String fileName = storyType + "stories";
-        InputStream inputStream = context.getResources().openRawResource(
-                context.getResources().getIdentifier(fileName, "raw", context.getPackageName())
-        );
-        return readFile(inputStream);
+        int resourceId = context.getResources().getIdentifier(fileName, "raw", context.getPackageName());
+        if (resourceId > 0) {
+            InputStream inputStream = context.getResources().openRawResource(resourceId);
+            return readFile(inputStream);
+        }
+        else {
+            throw new IOException("Mock file " + fileName + " missing.");
+        }
     }
 
 
@@ -82,8 +86,7 @@ public class MockDataUtils {
             return readFile(inputStream);
         }
         else {
-            Log.d(TAG, "*** getMockItemJson: file missing: " + fileName);
-            return "{}";
+            throw new IOException("Mock file " + fileName + " missing.");
         }
     }
 

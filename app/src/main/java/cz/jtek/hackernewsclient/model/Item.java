@@ -81,7 +81,7 @@ public class Item implements Parcelable {
     public void setScore(int score) { this.mScore = score; }
 
     public String getTitle() { return mTitle; }
-    public void setmTitle(String title) { this.mTitle = mTitle; }
+    public void setTitle(String title) { this.mTitle = title; }
 
     public long[] getParts() { return mParts; }
     public void setParts(long[] parts) { this.mParts = parts; }
@@ -90,7 +90,7 @@ public class Item implements Parcelable {
     public void setmDescendants(int descendants) { this.mDescendants = descendants; }
 
     // Default constructor
-    private Item() {
+    public Item() {
         mId = 0;
         mDeleted = false;
         mType = null;

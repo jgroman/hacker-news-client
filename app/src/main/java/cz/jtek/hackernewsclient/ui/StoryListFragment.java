@@ -77,7 +77,7 @@ public class StoryListFragment extends Fragment
     OnStoryClickListener mStoryClickListenerCallback;
 
     public static Fragment newInstance(@NonNull String storyType, long[] storyList) {
-        Log.d(TAG, "*** StoryListFragment newInstance " + storyType);
+        //Log.d(TAG, "*** StoryListFragment newInstance " + storyType);
         Bundle arguments = new Bundle();
         arguments.putString(BUNDLE_STORY_TYPE, storyType);
         arguments.putLongArray(BUNDLE_STORY_LIST, storyList);
@@ -120,7 +120,7 @@ public class StoryListFragment extends Fragment
             // Restoring story type and list from saved instance state
             mStoryType = savedInstanceState.getString(KEY_STORY_TYPE);
             mStoryList = savedInstanceState.getLongArray(KEY_STORY_LIST);
-            Log.d(TAG, "*** StoryListFragment onCreateView restoring: " + mStoryType);
+            //Log.d(TAG, "*** StoryListFragment onCreateView restoring: " + mStoryType);
         }
         else {
             // Get story type and list from passed arguments
@@ -136,7 +136,7 @@ public class StoryListFragment extends Fragment
                 }
             }
 
-            Log.d(TAG, "*** StoryListFragment onCreateView full load: " + mStoryType);
+            //Log.d(TAG, "*** StoryListFragment onCreateView full load: " + mStoryType);
         }
 
         mStoryListAdapter = new StoryListAdapter(mContext, mStoryList, this, activity );

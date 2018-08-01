@@ -89,7 +89,6 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
     @NonNull
     @Override
     public StoryListAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        Log.d(TAG, "onCreateViewHolder: ");
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.item_story, parent, false);
         return new ViewHolder(view);
@@ -97,18 +96,20 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
 
     @Override
     public void onBindViewHolder(@NonNull StoryListAdapter.ViewHolder holder, int position) {
-        Log.d(TAG, "*** onBindViewHolder: " + mStoryList[position]);
+        //Log.d(TAG, "*** onBindViewHolder: " + mStoryList[position]);
         holder.mStoryTitleTextView.setText(Long.toString(mStoryList[position]));
 
         if ( mActivity.mItemCache.get(mStoryList[position]) != null) {
-            // Populate holder from cache
-            holder.mStoryTitleTextView.setText("loaded");
+            // Populate holder from loader cache
+            String title = mActivity.mItemCache.get(mStoryList[position]).getTitle();
+            if (title != null) {
+                holder.mStoryTitleTextView.setText(title);
+            }
         }
         else {
             // Start item loader
-            mActivity.startItemLoader(position, mStoryList[position]);
+            mActivity.startItemLoader(mStoryList[position]);
         }
-
     }
 
     @Override
