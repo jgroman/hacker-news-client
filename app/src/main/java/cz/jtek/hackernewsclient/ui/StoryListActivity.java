@@ -168,7 +168,7 @@ public class StoryListActivity extends AppCompatActivity
             } else {
                 // Valid results received
                 String storyType = mArgs.getString(BUNDLE_STORY_TYPE);
-                Log.d(TAG, "*** onLoadFinished: loaded stories for: " + storyType);
+                Log.d(TAG, "*** onLoadFinished: loaded stories for: " + storyType + ", " + data.getResult()[1]);
                 mStoriesMap.put(storyType, data.getResult());
 
                 mPagerAdapter.notifyDataSetChanged();
@@ -278,6 +278,7 @@ public class StoryListActivity extends AppCompatActivity
         @Override
         public Loader<NetworkUtils.AsyncTaskResult<Item>> onCreateLoader(int id, Bundle bundle) {
             mItemId = bundle.getLong(BUNDLE_ITEM_ID);
+            //Log.d(TAG, "onCreateLoader: " + mItemId);
             return new ItemLoader(mContext, bundle);
         }
 
@@ -291,6 +292,7 @@ public class StoryListActivity extends AppCompatActivity
                 Exception ex = itemAsyncTaskResult.getException();
                 Log.d(TAG, "*** onLoadFinished: Exception for item: " + mItemId + ", msg: " + ex.getMessage());
                 //showErrorMessage(getResources().getString(R.string.error_msg_no_data));
+                mPagerAdapter.notifyDataSetChanged();
             }
             else {
                 // Valid results received

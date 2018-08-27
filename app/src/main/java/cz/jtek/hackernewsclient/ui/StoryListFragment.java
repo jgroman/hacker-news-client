@@ -89,16 +89,10 @@ public class StoryListFragment extends Fragment
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        Activity activity = getActivity();
+        final StoryListActivity activity = (StoryListActivity) getActivity();
         if (null == activity) { return null; }
 
         mContext = activity.getApplicationContext();
-
-        mStoryListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_story_list, container, false);
-
-        mLayoutManager = new LinearLayoutManager(mContext);
-        mStoryListRecyclerView.setLayoutManager(mLayoutManager);
-        mStoryListRecyclerView.setHasFixedSize(true);
 
         if (savedInstanceState != null) {
             // Restoring story type and list from saved instance state
@@ -123,8 +117,45 @@ public class StoryListFragment extends Fragment
             //Log.d(TAG, "*** StoryListFragment onCreateView full load: " + mStoryType);
         }
 
+        mStoryListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_story_list, container, false);
+
         mStoryListAdapter = new StoryListAdapter(mContext, mStoryList, this, activity );
         mStoryListRecyclerView.setAdapter(mStoryListAdapter);
+
+        mLayoutManager = new LinearLayoutManager(mContext);
+        mStoryListRecyclerView.setLayoutManager(mLayoutManager);
+        mStoryListRecyclerView.setHasFixedSize(true);
+
+        StoryListScrollListener scrollListener = new StoryListScrollListener(mLayoutManager) {
+            @Override
+            public void onLoadMore(RecyclerView recyclerView, int loadFromPosition, int itemCount) {
+
+                // Prefetch next 5 items
+                for(int i = 0; i < itemCount; i++) {
+                    if (activity.mItemCache.get(mStoryList[loadFromPosition + i]) == null) {
+                        activity.startItemLoader(mStoryList[loadFromPosition + i]);
+                    }
+                }
+
+
+                /*
+                List<Contact> moreContacts = Contact.createContactsList(10, page);
+                int curSize = mStoryListAdapter.getItemCount();
+                allContacts.addAll(moreContacts);
+
+                view.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mStoryListAdapter.notifyItemRangeInserted(curSize, allContacts.size() - 1);
+                    }
+                });
+                */
+            }
+        };
+
+        mStoryListRecyclerView.addOnScrollListener(scrollListener);
+
+
 
         return mStoryListRecyclerView;
     }
