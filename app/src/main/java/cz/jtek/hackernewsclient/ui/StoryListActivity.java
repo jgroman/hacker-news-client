@@ -56,7 +56,7 @@ public class StoryListActivity extends AppCompatActivity
     public static final String BUNDLE_ITEM_ID = "item-id";
 
 
-    private HashMap<String, long[]> mStoriesMap = new HashMap<>();
+    public HashMap<String, long[]> mStoriesMap = new HashMap<>();
     public LongSparseArray<Item> mItemCache = new LongSparseArray<>();
 
     private Context mContext;
@@ -292,6 +292,11 @@ public class StoryListActivity extends AppCompatActivity
                 Exception ex = itemAsyncTaskResult.getException();
                 Log.d(TAG, "*** onLoadFinished: Exception for item: " + mItemId + ", msg: " + ex.getMessage());
                 //showErrorMessage(getResources().getString(R.string.error_msg_no_data));
+
+                Item errorItem = new Item();
+                errorItem.setTitle("Failed to load");
+                mItemCache.put(mItemId, errorItem);
+
                 mPagerAdapter.notifyDataSetChanged();
             }
             else {

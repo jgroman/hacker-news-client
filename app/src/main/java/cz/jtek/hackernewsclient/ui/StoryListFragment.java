@@ -126,6 +126,7 @@ public class StoryListFragment extends Fragment
         mStoryListRecyclerView.setLayoutManager(mLayoutManager);
         mStoryListRecyclerView.setHasFixedSize(true);
 
+        /*
         StoryListScrollListener scrollListener = new StoryListScrollListener(mLayoutManager) {
             @Override
             public void onLoadMore(RecyclerView recyclerView, int loadFromPosition, int itemCount) {
@@ -136,25 +137,11 @@ public class StoryListFragment extends Fragment
                         activity.startItemLoader(mStoryList[loadFromPosition + i]);
                     }
                 }
-
-
-                /*
-                List<Contact> moreContacts = Contact.createContactsList(10, page);
-                int curSize = mStoryListAdapter.getItemCount();
-                allContacts.addAll(moreContacts);
-
-                view.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        mStoryListAdapter.notifyItemRangeInserted(curSize, allContacts.size() - 1);
-                    }
-                });
-                */
             }
         };
 
         mStoryListRecyclerView.addOnScrollListener(scrollListener);
-
+        */
 
 
         return mStoryListRecyclerView;

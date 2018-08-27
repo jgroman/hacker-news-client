@@ -170,7 +170,26 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
     @Override
     public int getItemCount() {
         if (mStoryList == null) { return 0; }
-        return mStoryList.length;
+        //return mStoryList.length;
+
+        Item item;
+        int itemCount = 0;
+
+        for (int i = 0; i < mStoryList.length; i++) {
+            item = mActivity.mItemCache.get(mStoryList[i]);
+            if (item == null) {
+                break;
+            }
+
+            if (item.getTitle().length() > 5) {
+                //Log.d(TAG, "*** getLoadedItemCount: adding " + item.getId());
+                itemCount++;
+            }
+        }
+
+        Log.d(TAG, "** getItemCount: total " + itemCount);
+
+        return itemCount;
     }
 
     public int getLoadedItemCount(int maxPosition) {
@@ -179,10 +198,14 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
         Item item;
         int itemCount = 0;
 
-        for (int i = 0; i < maxPosition; i++) {
+        for (int i = 0; i < mStoryList.length; i++) {
             item = mActivity.mItemCache.get(mStoryList[i]);
-            if (item != null && item.getTitle().length() > 5) {
-                Log.d(TAG, "*** getLoadedItemCount: counting " + item.getId());
+            if (item == null) {
+                break;
+            }
+
+            if (item.getTitle().length() > 5) {
+                //Log.d(TAG, "*** getLoadedItemCount: adding " + item.getId());
                 itemCount++;
             }
         }

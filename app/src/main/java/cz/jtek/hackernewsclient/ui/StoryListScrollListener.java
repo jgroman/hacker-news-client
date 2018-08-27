@@ -16,7 +16,7 @@ public abstract class StoryListScrollListener extends RecyclerView.OnScrollListe
 
     // The minimum amount of items to have below your current scroll position
     // before loading more.
-    private int visibleThreshold = 10;
+    private int visibleThreshold = 3;
     // True if we are still waiting for the last set of data to load.
     private boolean loading = true;
 
@@ -56,7 +56,7 @@ public abstract class StoryListScrollListener extends RecyclerView.OnScrollListe
         if (loading && (loadedItemCount >= oldLoadedItemCount + itemsToPreload)) {
             loading = false;
             oldLoadedItemCount = loadedItemCount;
-            Log.d(TAG, "onScrolled: loaded " + itemsToPreload + " to " + loadedItemCount);
+            Log.d(TAG, " ++++ onScrolled: loaded " + itemsToPreload + " to " + loadedItemCount);
         }
 
         // If it isn’t currently loading, we check to see if we have breached
@@ -65,7 +65,7 @@ public abstract class StoryListScrollListener extends RecyclerView.OnScrollListe
         // threshold should reflect how many total columns there are too
         if (!loading && (lastVisibleItemPosition + visibleThreshold) > loadedItemCount) {
             loading = true;
-            Log.d(TAG, "*** onScrolled: need to load "+ itemsToPreload +" from " + loadedItemCount);
+            Log.d(TAG, "++++ onScrolled: need to load "+ itemsToPreload +" from " + loadedItemCount);
             onLoadMore(view, loadedItemCount, itemsToPreload);
         }
     }
