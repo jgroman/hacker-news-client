@@ -255,7 +255,8 @@ public class StoryListActivity extends AppCompatActivity
     public void startItemLoader(long itemId) {
         // Create temporary item placeholder in cache to prevent multiple loading
         Item tempItem = new Item();
-        tempItem.setTitle("...");
+        tempItem.setTitle("Loading...");
+        tempItem.setId(itemId);
         mItemCache.put(itemId, tempItem);
 
         Bundle loaderBundle = new Bundle();
@@ -285,7 +286,6 @@ public class StoryListActivity extends AppCompatActivity
         @Override
         public void onLoadFinished(@NonNull Loader<NetworkUtils.AsyncTaskResult<Item>> loader,
                                    NetworkUtils.AsyncTaskResult<Item> itemAsyncTaskResult) {
-            //long itemId = mArgs.getLong(BUNDLE_ITEM_ID);
 
             if (itemAsyncTaskResult.hasException()) {
                 // There was an error during data loading
@@ -294,23 +294,21 @@ public class StoryListActivity extends AppCompatActivity
                 //showErrorMessage(getResources().getString(R.string.error_msg_no_data));
 
                 Item errorItem = new Item();
-                errorItem.setTitle("Failed to load");
+                errorItem.setTitle("Failed to load " + Long.toString(mItemId));
+                errorItem.setId(mItemId);
                 mItemCache.put(mItemId, errorItem);
 
-                mPagerAdapter.notifyDataSetChanged();
             }
             else {
                 // Valid results received
-                Item item = itemAsyncTaskResult.getResult();
-                mItemCache.put(mItemId, item);
-
-                // Refresh pager contents
-                mPagerAdapter.notifyDataSetChanged();
+                mItemCache.put(mItemId, itemAsyncTaskResult.getResult());
 
                 // Destroy this loader, otherwise is gets called again during onResume
                 //getLoaderManager().destroyLoader(LOADER_ID_STORY_LIST);
             }
 
+            // Refresh pager contents
+            mPagerAdapter.notifyDataSetChanged();
         }
 
         @Override

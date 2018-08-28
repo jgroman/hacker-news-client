@@ -126,12 +126,11 @@ public class StoryListFragment extends Fragment
         mStoryListRecyclerView.setLayoutManager(mLayoutManager);
         mStoryListRecyclerView.setHasFixedSize(true);
 
-        /*
         StoryListScrollListener scrollListener = new StoryListScrollListener(mLayoutManager) {
             @Override
-            public void onLoadMore(RecyclerView recyclerView, int loadFromPosition, int itemCount) {
+            public void onLoadMore(int loadFromPosition, int itemCount) {
 
-                // Prefetch next 5 items
+                // Prefetching items
                 for(int i = 0; i < itemCount; i++) {
                     if (activity.mItemCache.get(mStoryList[loadFromPosition + i]) == null) {
                         activity.startItemLoader(mStoryList[loadFromPosition + i]);
@@ -141,8 +140,6 @@ public class StoryListFragment extends Fragment
         };
 
         mStoryListRecyclerView.addOnScrollListener(scrollListener);
-        */
-
 
         return mStoryListRecyclerView;
     }
