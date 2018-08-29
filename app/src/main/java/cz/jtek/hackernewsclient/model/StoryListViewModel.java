@@ -5,6 +5,7 @@ import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.os.AsyncTask;
+import android.support.v4.util.LongSparseArray;
 import android.util.Log;
 
 import java.io.IOException;
@@ -20,22 +21,32 @@ public class StoryListViewModel extends AndroidViewModel {
     @SuppressWarnings("unused")
     static final String TAG = StoryListViewModel.class.getSimpleName();
 
-    private MutableLiveData<HashMap<String, long[]>> stories;
+    private MutableLiveData<HashMap<String, long[]>> storyIds;
+    private MutableLiveData<LongSparseArray<Item>> storyItems;
 
     public StoryListViewModel(Application application) {
         super(application);
     }
 
-    public LiveData<HashMap<String, long[]>> getStories() {
-        if (stories == null) {
+    public LiveData<HashMap<String, long[]>> getStoryIds() {
+        if (storyIds == null) {
 
-            stories = new MutableLiveData<>();
+            storyIds = new MutableLiveData<>();
             HashMap<String, long[]> hm = new HashMap<>();
-            stories.setValue(hm);
+            storyIds.setValue(hm);
 
-            new LoadStoriesTask(getApplication(), stories).execute();
+            new LoadStoriesTask(getApplication(), storyIds).execute();
         }
-        return stories;
+        return storyIds;
+    }
+
+    public LiveData<LongSparseArray<Item>> getStoryItems() {
+        if (storyItems == null) {
+            storyItems = new MutableLiveData<>();
+            LongSparseArray<Item> lsa = new LongSparseArray<>();
+            storyItems.setValue(lsa);
+        }
+        return storyItems;
     }
 
     private static class LoadStoriesTask extends AsyncTask<Void, Void, HashMap<String, long[]>> {
@@ -91,6 +102,19 @@ public class StoryListViewModel extends AndroidViewModel {
         @Override
         protected void onPostExecute(HashMap<String, long[]> result) {
             stories.setValue(result);
+        }
+    }
+
+    private static class LoadItemsTask extends AsyncTask<long[], Void, Item[]> {
+
+        @Override
+        protected Item[] doInBackground(long[]... longs) {
+            return new Item[0];
+        }
+
+        @Override
+        protected void onPostExecute(Item[] items) {
+            super.onPostExecute(items);
         }
     }
 

@@ -17,10 +17,8 @@
 package cz.jtek.hackernewsclient.ui;
 
 import android.arch.lifecycle.Observer;
-import android.arch.lifecycle.ViewModelProvider;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
@@ -60,7 +58,6 @@ public class StoryListActivity extends AppCompatActivity
     public static final String BUNDLE_ITEM_ID = "item-id";
 
 
-    public HashMap<String, long[]> mStoriesMap = new HashMap<>();
     public LongSparseArray<Item> mItemCache = new LongSparseArray<>();
 
     private Context mContext;
@@ -78,28 +75,24 @@ public class StoryListActivity extends AppCompatActivity
         mContext = this;
 
         TabLayout tabLayout = findViewById(R.id.tablayout_story_type);
-        mViewPager = findViewById(R.id.viewpager_story_type);
         AppBarLayout appbarLayout = findViewById(R.id.appbar_stories_list);
 
-        mPagerAdapter = new StoryTypeTabsAdapter(getSupportFragmentManager(), this);
-        mViewPager.setAdapter(mPagerAdapter);
-        tabLayout.setupWithViewPager(mViewPager);
-
         mModel = ViewModelProviders.of(this).get(StoryListViewModel.class);
-
         // Create the observer which updates the UI.
         final Observer<HashMap<String, long[]>> storiesObserver = new Observer<HashMap<String, long[]>>() {
             @Override
-            public void onChanged(@Nullable final HashMap<String, long[]> stories) {
+            public void onChanged(@Nullable final HashMap<String, long[]> storyIds) {
                 Log.d(TAG, "onChanged: stories");
-                mStoriesMap = stories;
                 mPagerAdapter.notifyDataSetChanged();
             }
         };
-
         // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer.
-        mModel.getStories().observe(this, storiesObserver);
+        mModel.getStoryIds().observe(this, storiesObserver);
 
+        mViewPager = findViewById(R.id.viewpager_story_type);
+        mPagerAdapter = new StoryTypeTabsAdapter(getSupportFragmentManager(), this);
+        mViewPager.setAdapter(mPagerAdapter);
+        tabLayout.setupWithViewPager(mViewPager);
     }
 
     @Override
@@ -131,14 +124,9 @@ public class StoryListActivity extends AppCompatActivity
 
         @Override
         public Fragment getItem(int i) {
-
-            if (mStoriesMap.get(mStoryTypeArray[i]) == null) {
-                long[] dummyArray = new long[] {};
-                mStoriesMap.put(mStoryTypeArray[i], dummyArray);
-            }
-
-            Fragment fragment = StoryListFragment.newInstance(mStoryTypeArray[i], mStoriesMap.get(mStoryTypeArray[i]));
-            return fragment;
+            HashMap<String, long[]> allStoryIds = mModel.getStoryIds().getValue();
+            if (allStoryIds == null) { return null; }
+            return StoryListFragment.newInstance(mStoryTypeArray[i], allStoryIds.get(mStoryTypeArray[i]));
         }
 
         @Override
@@ -148,7 +136,6 @@ public class StoryListActivity extends AppCompatActivity
 
         @Override
         public int getItemPosition(Object object) {
-            //Log.d(TAG, "*** getItemPosition: ");
             return POSITION_NONE;
         }
     }
