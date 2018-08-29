@@ -17,6 +17,7 @@
 package cz.jtek.hackernewsclient.utils;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.util.Log;
 
 import java.io.IOException;
@@ -61,15 +62,15 @@ public class MockDataUtils {
      * Provides file contents for testing. Mock JSON files are read
      * from /res/raw directory.
      *
-     * @param context     Current context
+     * @param resources     Current context
      * @param storyType   Story type string
      * @return File contents
      */
-    public static String getMockStoriesJson(Context context, String storyType) throws IOException {
+    public static String getMockStoriesJson(Resources resources, String packageName, String storyType) throws IOException {
         String fileName = storyType + "stories";
-        int resourceId = context.getResources().getIdentifier(fileName, "raw", context.getPackageName());
+        int resourceId = resources.getIdentifier(fileName, "raw", packageName);
         if (resourceId > 0) {
-            InputStream inputStream = context.getResources().openRawResource(resourceId);
+            InputStream inputStream = resources.openRawResource(resourceId);
             return readFile(inputStream);
         }
         else {

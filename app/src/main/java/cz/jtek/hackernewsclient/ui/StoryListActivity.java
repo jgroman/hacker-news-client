@@ -16,6 +16,9 @@
 
 package cz.jtek.hackernewsclient.ui;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
@@ -41,6 +44,7 @@ import java.util.HashMap;
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.model.HackerNewsApi;
 import cz.jtek.hackernewsclient.model.Item;
+import cz.jtek.hackernewsclient.model.StoryListViewModel;
 import cz.jtek.hackernewsclient.utils.MockDataUtils;
 import cz.jtek.hackernewsclient.utils.NetworkUtils;
 import cz.jtek.hackernewsclient.utils.NetworkUtils.AsyncTaskResult;
@@ -64,6 +68,8 @@ public class StoryListActivity extends AppCompatActivity
     private ViewPager mViewPager;
     public StoryTypeTabsAdapter mPagerAdapter;
 
+    private StoryListViewModel mModel;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,15 +85,20 @@ public class StoryListActivity extends AppCompatActivity
         mViewPager.setAdapter(mPagerAdapter);
         tabLayout.setupWithViewPager(mViewPager);
 
-        // Get all available tab story types
-        String[] storyTypes = getResources().getStringArray(R.array.story_type_strings);
+        mModel = ViewModelProviders.of(this).get(StoryListViewModel.class);
 
-        // Start loaders for all available story types
-        for (int i = 0; i < storyTypes.length; i++) {
-            Bundle loaderBundle = new Bundle();
-            loaderBundle.putString(BUNDLE_STORY_TYPE, storyTypes[i]);
-            getSupportLoaderManager().initLoader(i, loaderBundle, new StoryListLoaderListener());
-        }
+        // Create the observer which updates the UI.
+        final Observer<HashMap<String, long[]>> storiesObserver = new Observer<HashMap<String, long[]>>() {
+            @Override
+            public void onChanged(@Nullable final HashMap<String, long[]> stories) {
+                Log.d(TAG, "onChanged: stories");
+                mStoriesMap = stories;
+                mPagerAdapter.notifyDataSetChanged();
+            }
+        };
+
+        // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer.
+        mModel.getStories().observe(this, storiesObserver);
 
     }
 
@@ -142,111 +153,6 @@ public class StoryListActivity extends AppCompatActivity
         }
     }
 
-    /**
-     *
-     */
-    private class StoryListLoaderListener implements LoaderManager.LoaderCallbacks<AsyncTaskResult<long[]>> {
-        private Bundle mArgs;
-
-        @NonNull
-        @Override
-        public Loader<AsyncTaskResult<long[]>> onCreateLoader(int id, @Nullable Bundle args) {
-            //mLoadingIndicator.setVisibility(View.VISIBLE);
-            Log.d(TAG, "*** onCreateLoader: " + args.getString(BUNDLE_STORY_TYPE));
-            mArgs = args;
-            return new StoryListLoader(mContext, args);
-        }
-
-        @Override
-        public void onLoadFinished(@NonNull Loader<AsyncTaskResult<long[]>> loader, AsyncTaskResult<long[]> data) {
-            //mLoadingIndicator.setVisibility(View.INVISIBLE);
-
-            if (data.hasException()) {
-                // There was an error during data loading
-                Exception ex = data.getException();
-                //showErrorMessage(getResources().getString(R.string.error_msg_no_data));
-            } else {
-                // Valid results received
-                String storyType = mArgs.getString(BUNDLE_STORY_TYPE);
-                Log.d(TAG, "*** onLoadFinished: loaded stories for: " + storyType + ", " + data.getResult()[1]);
-                mStoriesMap.put(storyType, data.getResult());
-
-                mPagerAdapter.notifyDataSetChanged();
-
-                // Destroy this loader, otherwise is gets called again during onResume
-                //getLoaderManager().destroyLoader(LOADER_ID_STORY_LIST);
-            }
-        }
-
-        @Override
-        public void onLoaderReset(@NonNull Loader<AsyncTaskResult<long[]>> loader) {
-            // Not implemented
-        }
-
-    }
-
-    /**
-     * Story list async task loader implementation
-     */
-    public static class StoryListLoader
-            extends AsyncTaskLoader<AsyncTaskResult<long[]>> {
-
-        final PackageManager mPackageManager;
-        AsyncTaskResult<long[]> mResult;
-
-        private final String mStoryType;
-        private final boolean mUseMockData;
-
-        private StoryListLoader(Context context, Bundle args) {
-            super(context);
-            mPackageManager = context.getPackageManager();
-            mStoryType = args.getString(BUNDLE_STORY_TYPE);
-            mUseMockData = true;
-        }
-
-        @Override
-        protected void onStartLoading() {
-            if (mResult != null && (mResult.hasResult() || mResult.hasException())) {
-                // If there are already data available, deliver them
-                deliverResult(mResult);
-            } else {
-                // Start loader
-                forceLoad();
-            }
-        }
-
-        @Override
-        protected void onStopLoading() {
-            cancelLoad();
-        }
-
-        @Override
-        public AsyncTaskResult<long[]> loadInBackground() {
-            String jsonStoryList;
-
-            try {
-                // Load story list JSON
-                URL storiesUrl = HackerNewsApi.buildStoriesUrl(mStoryType);
-
-                if (mUseMockData) {
-                    // Mock request used for debugging to avoid sending network queries
-                    jsonStoryList = MockDataUtils.getMockStoriesJson(getContext(), mStoryType);
-                } else {
-                    jsonStoryList = NetworkUtils.getResponseFromHttpUrl(storiesUrl);
-                }
-
-                HackerNewsApi.HackerNewsJsonResult<long[]> storyListResult =
-                        HackerNewsApi.getStoriesFromJson(jsonStoryList);
-
-                mResult = new AsyncTaskResult<>(storyListResult.getResult(), storyListResult.getException());
-            } catch (IOException iex) {
-                Log.e(TAG, String.format("IOException when fetching API story data: %s", iex.getMessage()));
-                mResult = new AsyncTaskResult<>(null, iex);
-            }
-
-            return mResult;
-        }
-    }
 
     /**
      *
