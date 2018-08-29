@@ -1,5 +1,8 @@
 package cz.jtek.hackernewsclient.model;
 
+import android.databinding.BaseObservable;
+import android.databinding.Bindable;
+import android.databinding.BindingAdapter;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -9,7 +12,9 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class Item implements Parcelable {
+import cz.jtek.hackernewsclient.BR;
+
+public class Item extends BaseObservable implements Parcelable {
 
     @SuppressWarnings("unused")
     private static final String TAG = Item.class.getSimpleName();
@@ -31,116 +36,181 @@ public class Item implements Parcelable {
     private static final String DESCENDANTS = "descendants";
 
     // Members
-    private long mId;
-    private Boolean mDeleted;
-    private String mType;
-    private String mBy;
-    private String mText;
-    private Boolean mDead;
-    private long mParent;
-    private long mPoll;
-    private long[] mKids;
-    private String mUrl;
-    private int mScore;
-    private String mTitle;
-    private long[] mParts;
-    private int mDescendants;
+    private long id;
+    private Boolean deleted;
+    private String type;
+    private String by;
+    private String text;
+    private Boolean dead;
+    private long parent;
+    private long poll;
+    private long[] kids;
+    private String url;
+    private int score;
+    private String title;
+    private long[] parts;
+    private int descendants;
 
     // Getters & Setters
-    public long getId() { return mId; }
-    public void setId(long id) { mId = id; }
+    @Bindable
+    public long getId() { return id; }
+    public void setId(long id) {
+        this.id = id;
+        notifyPropertyChanged(BR.id);
+    }
 
-    public Boolean getDeleted() { return mDeleted; }
-    public void setDeleted(Boolean deleted) { mDeleted = deleted; }
+    @Bindable
+    public Boolean getDeleted() { return deleted; }
+    public void setDeleted(Boolean deleted) {
+        this.deleted = deleted;
+        notifyPropertyChanged(BR.deleted);
+    }
 
-    public String getType() { return mType; }
-    public void setType(String type) { mType = type; }
+    @Bindable
+    public String getType() { return type; }
+    public void setType(String type) {
+        this.type = type;
+        notifyPropertyChanged(BR.type);
+    }
 
-    public String getBy() { return mBy; }
-    public void setBy(String by) { mBy = by; }
+    @Bindable
+    public String getBy() { return by; }
+    public void setBy(String by) {
+        this.by = by;
+        notifyPropertyChanged(BR.by);
+    }
 
-    public String getText() { return mText; }
-    public void setText(String text) { mText = text; }
+    @Bindable
+    public String getText() { return text; }
+    public void setText(String text) {
+        this.text = text;
+        notifyPropertyChanged(BR.text);
+    }
 
-    public Boolean getDead() { return mDead; }
-    public void setDead(Boolean dead) { this.mDead = dead; }
+    @Bindable
+    public Boolean getDead() { return dead; }
+    public void setDead(Boolean dead) {
+        this.dead = dead;
+        notifyPropertyChanged(BR.dead);
+    }
 
-    public long getParent() { return mParent; }
-    public void setParent(long parent) { this.mParent = parent; }
+    @Bindable
+    public long getParent() { return parent; }
+    public void setParent(long parent) {
+        this.parent = parent;
+        notifyPropertyChanged(BR.parent);
+    }
 
-    public long getPoll() { return mPoll; }
-    public void setPoll(long poll) { this.mPoll = poll; }
+    @Bindable
+    public long getPoll() { return poll; }
+    public void setPoll(long poll) {
+        this.poll = poll;
+        notifyPropertyChanged(BR.poll);
+    }
 
-    public long[] getKids() { return mKids; }
-    public void setKids(long[] kids) { this.mKids = kids; }
+    @Bindable
+    public long[] getKids() { return kids; }
+    public void setKids(long[] kids) {
+        this.kids = kids;
+        notifyPropertyChanged(BR.kids);
+    }
 
-    public String getURL() { return mUrl; }
-    public void setUrl(String url) { this.mUrl = url; }
+    @Bindable
+    public String getUrl() { return url; }
+    public void setUrl(String url) {
+        this.url = url;
+        notifyPropertyChanged(BR.url);
+    }
 
-    public int getScore() { return mScore; }
-    public void setScore(int score) { this.mScore = score; }
+    @Bindable
+    public int getScore() { return score; }
+    public void setScore(int score) {
+        this.score = score;
+        notifyPropertyChanged(BR.score);
+    }
 
-    public String getTitle() { return mTitle; }
-    public void setTitle(String title) { this.mTitle = title; }
+    @Bindable
+    public String getTitle() { return title; }
+    public void setTitle(String title) {
+        this.title = title;
+        notifyPropertyChanged(BR.title);
+    }
 
-    public long[] getParts() { return mParts; }
-    public void setParts(long[] parts) { this.mParts = parts; }
+    @Bindable
+    public long[] getParts() { return parts; }
+    public void setParts(long[] parts) {
+        this.parts = parts;
+        notifyPropertyChanged(BR.parts);
+    }
 
-    public int getDescendants() { return mDescendants; }
-    public void setmDescendants(int descendants) { this.mDescendants = descendants; }
+    @Bindable
+    public int getDescendants() { return descendants; }
+    public void setDescendants(int descendants) {
+        this.descendants = descendants;
+        notifyPropertyChanged(BR.descendants);
+    }
+
+    /*
+    @BindingAdapter("bind:itemId")
+    public static void loadItem(long itemId) {
+
+    }
+    */
 
     // Default constructor
     public Item() {
-        mId = 0;
-        mDeleted = false;
-        mType = null;
-        mBy = null;
-        mText = null;
-        mDead = false;
-        mParent = 0;
-        mPoll = 0;
-        mKids = null;
-        mUrl = null;
-        mScore = 0;
-        mTitle = null;
-        mParts = null;
-        mDescendants = 0;
+        this.id = 0;
+        this.deleted = false;
+        this.type = null;
+        this.by = null;
+        this.text = null;
+        this.dead = false;
+        this.parent = 0;
+        this.poll = 0;
+        this.kids = null;
+        this.url = null;
+        this.score = 0;
+        this.title = null;
+        this.parts = null;
+        this.descendants = 0;
     }
 
     // Constructor converting JSON object to instance of this class
     public static Item fromJson(JSONObject jo) {
         Item item = new Item();
 
-        item.mId = jo.optLong(ITEM_ID);
-        item.mDeleted = jo.optBoolean(DELETED);
-        item.mType = jo.optString(TYPE, null);
-        item.mBy = jo.optString(BY, null);
-        item.mText = jo.optString(TEXT, null);
-        item.mDead = jo.optBoolean(DEAD);
-        item.mParent = jo.optLong(PARENT);
-        item.mPoll = jo.optLong(POLL);
+        item.setId(jo.optLong(ITEM_ID));
+        item.setDeleted(jo.optBoolean(DELETED));
+        item.setType(jo.optString(TYPE, null));
+        item.setBy(jo.optString(BY, null));
+        item.setText(jo.optString(TEXT, null));
+        item.setDead(jo.optBoolean(DEAD));
+        item.setParent(jo.optLong(PARENT));
+        item.setPoll(jo.optLong(POLL));
 
         JSONArray ja = jo.optJSONArray(KIDS);
         if (ja != null) {
-            item.mKids = new long[ja.length()];
+            long[] arrKids = new long[ja.length()];
             for (int i = 0; i < ja.length(); ++i) {
-                item.mKids[i] = ja.optLong(i);
+                arrKids[i] = ja.optLong(i);
             }
+            item.setKids(arrKids);
         }
 
-        item.mUrl = jo.optString(URL, null);
-        item.mScore = jo.optInt(SCORE);
-        item.mTitle = jo.optString(TITLE, null);
+        item.setUrl(jo.optString(URL, null));
+        item.setScore(jo.optInt(SCORE));
+        item.setTitle(jo.optString(TITLE, null));
 
         ja = jo.optJSONArray(PARTS);
         if (ja != null) {
-            item.mParts = new long[ja.length()];
+            long[] arrParts = new long[ja.length()];
             for (int i = 0; i < ja.length(); ++i) {
-                item.mParts[i] = ja.optLong(i);
+                arrParts[i] = ja.optLong(i);
             }
+            item.setParts(arrParts);
         }
 
-        item.mDescendants = jo.optInt(DESCENDANTS);
+        item.setDescendants(jo.optInt(DESCENDANTS));
 
         return item;
     }
@@ -169,40 +239,40 @@ public class Item implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel parcel, int flags) {
-        parcel.writeLong(mId);
-        parcel.writeInt(mDeleted ? 1 : 0);
-        parcel.writeString(mType);
-        parcel.writeString(mBy);
-        parcel.writeString(mText);
-        parcel.writeInt(mDead ? 1 : 0);
-        parcel.writeLong(mParent);
-        parcel.writeLong(mPoll);
-        parcel.writeLongArray(mKids);
-        parcel.writeString(mUrl);
-        parcel.writeInt(mScore);
-        parcel.writeString(mTitle);
-        parcel.writeLongArray(mParts);
-        parcel.writeInt(mDescendants);
+        parcel.writeLong(this.id);
+        parcel.writeInt(this.deleted ? 1 : 0);
+        parcel.writeString(this.type);
+        parcel.writeString(this.by);
+        parcel.writeString(this.text);
+        parcel.writeInt(this.dead ? 1 : 0);
+        parcel.writeLong(this.parent);
+        parcel.writeLong(this.poll);
+        parcel.writeLongArray(this.kids);
+        parcel.writeString(this.url);
+        parcel.writeInt(this.score);
+        parcel.writeString(this.title);
+        parcel.writeLongArray(this.parts);
+        parcel.writeInt(this.descendants);
     }
 
     // Constructor from incoming Parcel
     private Item(Parcel in) {
-        mId = in.readLong();
-        mDeleted = in.readInt() != 0;
-        mType = in.readString();
-        mBy = in.readString();
-        mText = in.readString();
-        mDead = in.readInt() != 0;
-        mParent = in.readLong();
-        mPoll = in.readLong();
-        if (mKids == null) { mKids = new long[1]; }
-        in.readLongArray(mKids);
-        mUrl = in.readString();
-        mScore = in.readInt();
-        mTitle = in.readString();
-        if (mParts == null) { mParts = new long[1]; }
-        in.readLongArray(mParts);
-        mDescendants = in.readInt();
+        this.id = in.readLong();
+        this.deleted = in.readInt() != 0;
+        this.type = in.readString();
+        this.by = in.readString();
+        this.text = in.readString();
+        this.dead = in.readInt() != 0;
+        this.parent = in.readLong();
+        this.poll = in.readLong();
+        if (this.kids == null) { this.kids = new long[1]; }
+        in.readLongArray(this.kids);
+        this.url = in.readString();
+        this.score = in.readInt();
+        this.title = in.readString();
+        if (this.parts == null) { this.parts = new long[1]; }
+        in.readLongArray(this.parts);
+        this.descendants = in.readInt();
     }
 
     // Parcelable creator

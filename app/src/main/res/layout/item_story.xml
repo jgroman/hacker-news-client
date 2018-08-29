@@ -16,55 +16,71 @@
      limitations under the License.
 -->
 
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    >
+<layout xmlns:bind="http://schemas.android.com/apk/res/android">
 
-    <TextView
-        android:id="@+id/tv_story_title"
+    <data>
+        <import type="cz.jtek.hackernewsclient.utils.BindingUtils" />
+
+        <variable
+            name="item"
+            type="cz.jtek.hackernewsclient.model.Item"
+            />
+    </data>
+
+    <RelativeLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textStyle="bold"
-        tools:text="Story title"
-        />
+        android:orientation="vertical"
+        >
 
-    <TextView
-        android:id="@+id/tv_story_url"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/tv_story_title"
-        android:textAlignment="viewEnd"
-        tools:text="Story URL"
-        />
+        <TextView
+            android:id="@+id/tv_story_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:text="@{item.title}"
+            tools:text="Story title"
+            />
 
-    <TextView
-        android:id="@+id/tv_story_score"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/tv_story_url"
-        android:layout_alignParentStart="true"
-        android:paddingEnd="16dp"
-        tools:text="42"
-        />
+        <TextView
+            android:id="@+id/tv_story_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_story_title"
+            android:textAlignment="viewEnd"
+            android:text="@{BindingUtils.getUrlHost(item.url)}"
+            tools:text="Story URL"
+            />
 
-    <TextView
-        android:id="@+id/tv_story_comments"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/tv_story_url"
-        android:layout_toEndOf="@id/tv_story_score"
-        tools:text="24"
-        />
+        <TextView
+            android:id="@+id/tv_story_score"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_story_url"
+            android:layout_alignParentStart="true"
+            android:paddingEnd="16dp"
+            android:text="@{BindingUtils.convertIntToString(item.score)}"
+            tools:text="42"
+            />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#C0C0C0"
-        android:layout_below="@id/tv_story_score"
-        />
+        <TextView
+            android:id="@+id/tv_story_comments"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_story_url"
+            android:layout_toEndOf="@id/tv_story_score"
+            android:text="@{BindingUtils.convertIntToString(item.descendants)}"
+            tools:text="24"
+            />
 
-</RelativeLayout>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#C0C0C0"
+            android:layout_below="@id/tv_story_score"
+            />
+
+    </RelativeLayout>
+</layout>

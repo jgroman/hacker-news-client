@@ -18,6 +18,7 @@ package cz.jtek.hackernewsclient.ui;
 
 import android.app.Activity;
 import android.content.Context;
+import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -48,7 +49,9 @@ import cz.jtek.hackernewsclient.utils.MockDataUtils;
 import cz.jtek.hackernewsclient.utils.NetworkUtils;
 import cz.jtek.hackernewsclient.utils.NetworkUtils.AsyncTaskResult;
 
-public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.ViewHolder> {
+import cz.jtek.hackernewsclient.databinding.ItemStoryBinding;
+
+public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.StoryViewHolder> {
 
     @SuppressWarnings("unused")
     private static final String TAG = StoryListAdapter.class.getSimpleName();
@@ -67,6 +70,7 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
     private Context mContext;
     private long[] mStoryList;
     private StoryListActivity mActivity;
+    private LayoutInflater layoutInflater;
 
     StoryListAdapter(Context context, long[] storyList, StoryListOnClickListener clickListener, Activity activity) {
         mContext = context;
@@ -75,12 +79,9 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
         mActivity =  (StoryListActivity) activity;
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public class StoryViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        final TextView mStoryTitleTextView;
-        final TextView mStoryUrlTextView;
-        final TextView mStoryScoreTextView;
-        final TextView mStoryCommentsTextView;
+        private ItemStoryBinding binding;
 
         /**
          * View holder constructor
@@ -88,13 +89,14 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
          *
          * @param view View to be held in holder
          */
-        ViewHolder(View view) {
+        StoryViewHolder(View view) {
             super(view);
-            mStoryTitleTextView = view.findViewById(R.id.tv_story_title);
-            mStoryUrlTextView = view.findViewById(R.id.tv_story_url);
-            mStoryScoreTextView = view.findViewById(R.id.tv_story_score);
-            mStoryCommentsTextView = view.findViewById(R.id.tv_story_comments);
+            binding = DataBindingUtil.bind(view);
             view.setOnClickListener(this);
+        }
+
+        public void bind(Item item) {
+            binding.setItem(item);
         }
 
         /**
@@ -111,67 +113,29 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.View
 
     @NonNull
     @Override
-    public StoryListAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public StoryListAdapter.StoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.item_story, parent, false);
-        return new ViewHolder(view);
+        return new StoryViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull StoryListAdapter.ViewHolder holder, int position) {
-        //Log.d(TAG, "*** onBindViewHolder: " + mStoryList[position]);
-        holder.mStoryTitleTextView.setText(Long.toString(mStoryList[position]));
-
+    public void onBindViewHolder(@NonNull StoryListAdapter.StoryViewHolder holder, int position) {
         Item item = mActivity.mItemCache.get(mStoryList[position]);
 
-        if (item != null) {
-            // Populate holder from loader cache
-            // Title
-            String title = item.getTitle();
-            if (title != null) {
-                holder.mStoryTitleTextView.setText(title);
-            }
-
-            // Host url
-            String urlHost;
-            try {
-                URL url = new URL(item.getURL());
-                urlHost = url.getHost();
-            }
-            catch (MalformedURLException mex) {
-                urlHost = "...";
-            }
-            holder.mStoryUrlTextView.setText(urlHost);
-
-            // Story upvotes
-            int score = item.getScore();
-            holder.mStoryScoreTextView.setText(String.format(Locale.getDefault(),"%d", score));
-
-            // Story comment count
-            int comments = item.getDescendants();
-            holder.mStoryCommentsTextView.setText(String.format(Locale.getDefault(),"%d", comments));
-        }
-        else {
-            // Start item loader
+        if (item == null) {
+            item = new Item();
+            item.setId(mStoryList[position]);
             mActivity.startItemLoader(mStoryList[position]);
         }
 
-        // Prefetch next 5 items
-        /*
-        for(int i = 1; i < 6; i++) {
-            if (mActivity.mItemCache.get(mStoryList[position + i]) == null) {
-                mActivity.startItemLoader(mStoryList[position + i]);
-            }
-        }
-        */
-
+        holder.bind(item);
     }
 
     @Override
     public int getItemCount() {
         if (mStoryList == null) { return 0; }
         return mStoryList.length;
-
     }
 
     public int getCachedItemCount() {
