@@ -17,11 +17,14 @@
 package cz.jtek.hackernewsclient.ui;
 
 import android.app.Activity;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.util.LongSparseArray;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -30,6 +33,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import cz.jtek.hackernewsclient.R;
+import cz.jtek.hackernewsclient.model.Item;
+import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
 public class StoryListFragment extends Fragment
     implements StoryListAdapter.StoryListOnClickListener {
@@ -39,11 +44,9 @@ public class StoryListFragment extends Fragment
 
     // Bundle arguments
     public static final String BUNDLE_STORY_TYPE = "story-type";
-    public static final String BUNDLE_STORY_LIST = "story-list";
 
     // Instance state bundle keys
     private static final String KEY_STORY_TYPE = BUNDLE_STORY_TYPE;
-    private static final String KEY_STORY_LIST = "story-list";
 
     private Context mContext;
     private String mStoryType;
@@ -51,6 +54,9 @@ public class StoryListFragment extends Fragment
     private RecyclerView mStoryListRecyclerView;
     private StoryListAdapter mStoryListAdapter;
     private LinearLayoutManager mLayoutManager;
+
+    private StoryListActivity mActivity;
+    private StoryListViewModel mModel;
 
     // Custom OnStoryClickListener interface, must be implemented by container activity
     public interface OnStoryClickListener {
@@ -60,11 +66,10 @@ public class StoryListFragment extends Fragment
     // This is a callback to onStorySelected in container activity
     OnStoryClickListener mStoryClickListenerCallback;
 
-    public static Fragment newInstance(@NonNull String storyType, long[] storyList) {
+    public static Fragment newInstance(@NonNull String storyType) {
         //Log.d(TAG, "*** StoryListFragment newInstance " + storyType);
         Bundle arguments = new Bundle();
         arguments.putString(BUNDLE_STORY_TYPE, storyType);
-        arguments.putLongArray(BUNDLE_STORY_LIST, storyList);
         StoryListFragment fragment = new StoryListFragment();
         fragment.setArguments(arguments);
         return fragment;
@@ -85,19 +90,24 @@ public class StoryListFragment extends Fragment
         }
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mActivity = (StoryListActivity) getActivity();
+        if (null == mActivity) { return; }
+
+        mModel = ViewModelProviders.of(getActivity()).get(StoryListViewModel.class);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 
-        final StoryListActivity activity = (StoryListActivity) getActivity();
-        if (null == activity) { return null; }
-
-        mContext = activity.getApplicationContext();
+        mContext = mActivity.getApplicationContext();
 
         if (savedInstanceState != null) {
             // Restoring story type and list from saved instance state
             mStoryType = savedInstanceState.getString(KEY_STORY_TYPE);
-            mStoryList = savedInstanceState.getLongArray(KEY_STORY_LIST);
             //Log.d(TAG, "*** StoryListFragment onCreateView restoring: " + mStoryType);
         }
         else {
@@ -108,38 +118,32 @@ public class StoryListFragment extends Fragment
                 if (args.containsKey(BUNDLE_STORY_TYPE)) {
                     mStoryType = args.getString(BUNDLE_STORY_TYPE);
                 }
-
-                if (args.containsKey(BUNDLE_STORY_LIST)) {
-                    mStoryList = args.getLongArray(BUNDLE_STORY_LIST);
-                }
             }
 
             //Log.d(TAG, "*** StoryListFragment onCreateView full load: " + mStoryType);
         }
 
+        mStoryList = mModel.getStoryIds().getValue().get(mStoryType);
+
         mStoryListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_story_list, container, false);
 
-        mStoryListAdapter = new StoryListAdapter(mContext, mStoryList, this, activity );
+        mStoryListAdapter = new StoryListAdapter(mActivity, mStoryType, this);
         mStoryListRecyclerView.setAdapter(mStoryListAdapter);
 
         mLayoutManager = new LinearLayoutManager(mContext);
         mStoryListRecyclerView.setLayoutManager(mLayoutManager);
         mStoryListRecyclerView.setHasFixedSize(true);
 
-        StoryListScrollListener scrollListener = new StoryListScrollListener(mLayoutManager) {
+        // Create the observer for story items which updates the UI
+        final Observer<LongSparseArray<Item>> itemsObserver = new Observer<LongSparseArray<Item>>() {
             @Override
-            public void onLoadMore(int loadFromPosition, int itemCount) {
-
-                // Prefetching items
-                for(int i = 0; i < itemCount; i++) {
-                    if (activity.mItemCache.get(mStoryList[loadFromPosition + i]) == null) {
-                        activity.startItemLoader(mStoryList[loadFromPosition + i]);
-                    }
-                }
+            public void onChanged(@Nullable LongSparseArray<Item> itemLongSparseArray) {
+                //Log.d(TAG, "onChanged: items");
+                mStoryListAdapter.notifyDataSetChanged();
             }
         };
-
-        mStoryListRecyclerView.addOnScrollListener(scrollListener);
+        // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer
+        mModel.getStoryItems().observe(this, itemsObserver);
 
         return mStoryListRecyclerView;
     }
@@ -148,8 +152,6 @@ public class StoryListFragment extends Fragment
     public void onSaveInstanceState(@NonNull Bundle outState) {
         // Store story type
         outState.putString(KEY_STORY_TYPE, mStoryType);
-        // Store story list
-        outState.putLongArray(KEY_STORY_LIST, mStoryList);
 
         super.onSaveInstanceState(outState);
     }
@@ -162,6 +164,10 @@ public class StoryListFragment extends Fragment
     @Override
     public void onClick(int position) {
         mStoryClickListenerCallback.onStorySelected(position);
+    }
+
+    public String getStoryType() {
+        return mStoryType;
     }
 
 }

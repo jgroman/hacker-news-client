@@ -17,37 +17,18 @@
 package cz.jtek.hackernewsclient.ui;
 
 import android.app.Activity;
-import android.content.Context;
+import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
-import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
-import android.support.v4.util.LongSparseArray;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
-
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Locale;
 
 import cz.jtek.hackernewsclient.R;
-import cz.jtek.hackernewsclient.model.HackerNewsApi;
 import cz.jtek.hackernewsclient.model.Item;
-import cz.jtek.hackernewsclient.utils.MockDataUtils;
-import cz.jtek.hackernewsclient.utils.NetworkUtils;
-import cz.jtek.hackernewsclient.utils.NetworkUtils.AsyncTaskResult;
+import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
 import cz.jtek.hackernewsclient.databinding.ItemStoryBinding;
 
@@ -56,27 +37,19 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.Stor
     @SuppressWarnings("unused")
     private static final String TAG = StoryListAdapter.class.getSimpleName();
 
-    // Bundle arguments
-    public static final String BUNDLE_ITEM_ID = "item-id";
-
-    //
-
     public interface StoryListOnClickListener {
         void onClick(int position);
     }
 
     private final StoryListOnClickListener mClickListener;
 
-    private Context mContext;
+    private StoryListViewModel mModel;
     private long[] mStoryList;
-    private StoryListActivity mActivity;
-    private LayoutInflater layoutInflater;
 
-    StoryListAdapter(Context context, long[] storyList, StoryListOnClickListener clickListener, Activity activity) {
-        mContext = context;
-        mStoryList = storyList;
+    StoryListAdapter(Activity activity, String storyType, StoryListOnClickListener clickListener) {
+        mModel = ViewModelProviders.of((StoryListActivity) activity).get(StoryListViewModel.class);
+        mStoryList = mModel.getStoryIds().getValue().get(storyType);
         mClickListener = clickListener;
-        mActivity =  (StoryListActivity) activity;
     }
 
     public class StoryViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -95,7 +68,7 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.Stor
             view.setOnClickListener(this);
         }
 
-        public void bind(Item item) {
+        void bind(Item item) {
             binding.setItem(item);
         }
 
@@ -121,14 +94,7 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.Stor
 
     @Override
     public void onBindViewHolder(@NonNull StoryListAdapter.StoryViewHolder holder, int position) {
-        Item item = mActivity.mItemCache.get(mStoryList[position]);
-
-        if (item == null) {
-            item = new Item();
-            item.setId(mStoryList[position]);
-            mActivity.startItemLoader(mStoryList[position]);
-        }
-
+        Item item = mModel.getItem(mStoryList[position], true);
         holder.bind(item);
     }
 
@@ -137,28 +103,5 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.Stor
         if (mStoryList == null) { return 0; }
         return mStoryList.length;
     }
-
-    public int getCachedItemCount() {
-        if (mStoryList == null) { return 0; }
-
-        Item item;
-        int itemCount = 0;
-
-        for (int i = 0; i < mStoryList.length; i++) {
-            item = mActivity.mItemCache.get(mStoryList[i]);
-            if (item == null) {
-                break;
-            }
-
-            if (item.getTitle().length() > 5) {
-                //Log.d(TAG, "*** getCachedItemCount: adding " + item.getId());
-                itemCount++;
-            }
-        }
-
-        Log.d(TAG, "** getCachedItemCount: total " + itemCount);
-        return itemCount;
-    }
-
 
 }

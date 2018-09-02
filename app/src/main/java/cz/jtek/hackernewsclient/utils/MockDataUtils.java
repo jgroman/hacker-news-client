@@ -79,11 +79,11 @@ public class MockDataUtils {
     }
 
 
-    public static String getMockItemJson(Context context, long itemId) throws IOException {
+    public static String getMockItemJson(Resources resources, String packageName, long itemId) throws IOException {
         String fileName = "item" + Long.toString(itemId);
-        int resourceId = context.getResources().getIdentifier(fileName, "raw", context.getPackageName());
+        int resourceId = resources.getIdentifier(fileName, "raw", packageName);
         if (resourceId > 0) {
-            InputStream inputStream = context.getResources().openRawResource(resourceId);
+            InputStream inputStream = resources.openRawResource(resourceId);
             return readFile(inputStream);
         }
         else {

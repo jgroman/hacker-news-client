@@ -19,33 +19,24 @@ package cz.jtek.hackernewsclient.ui;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
+import android.content.res.Resources;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.AsyncTaskLoader;
-import android.support.v4.content.Loader;
-import android.support.v4.util.LongSparseArray;
+import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 
-import java.io.IOException;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import cz.jtek.hackernewsclient.R;
-import cz.jtek.hackernewsclient.model.HackerNewsApi;
-import cz.jtek.hackernewsclient.model.Item;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
-import cz.jtek.hackernewsclient.utils.MockDataUtils;
-import cz.jtek.hackernewsclient.utils.NetworkUtils;
-import cz.jtek.hackernewsclient.utils.NetworkUtils.AsyncTaskResult;
 
 public class StoryListActivity extends AppCompatActivity
         implements StoryListFragment.OnStoryClickListener {
@@ -53,40 +44,29 @@ public class StoryListActivity extends AppCompatActivity
     @SuppressWarnings("unused")
     private static final String TAG = StoryListActivity.class.getSimpleName();
 
-    // Bundle arguments
-    public static final String BUNDLE_STORY_TYPE = "story-type";
-    public static final String BUNDLE_ITEM_ID = "item-id";
-
-
-    public LongSparseArray<Item> mItemCache = new LongSparseArray<>();
-
-    private Context mContext;
-
     private ViewPager mViewPager;
     public StoryTypeTabsAdapter mPagerAdapter;
 
-    private StoryListViewModel mModel;
+    public StoryListViewModel mModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_story_list);
 
-        mContext = this;
-
         TabLayout tabLayout = findViewById(R.id.tablayout_story_type);
         AppBarLayout appbarLayout = findViewById(R.id.appbar_stories_list);
 
         mModel = ViewModelProviders.of(this).get(StoryListViewModel.class);
-        // Create the observer which updates the UI.
+        // Create the observer for story ids which updates the UI
         final Observer<HashMap<String, long[]>> storiesObserver = new Observer<HashMap<String, long[]>>() {
             @Override
             public void onChanged(@Nullable final HashMap<String, long[]> storyIds) {
-                Log.d(TAG, "onChanged: stories");
+                //Log.d(TAG, "onChanged: stories");
                 mPagerAdapter.notifyDataSetChanged();
             }
         };
-        // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer.
+        // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer
         mModel.getStoryIds().observe(this, storiesObserver);
 
         mViewPager = findViewById(R.id.viewpager_story_type);
@@ -103,16 +83,17 @@ public class StoryListActivity extends AppCompatActivity
     /**
      *
      */
-    private class StoryTypeTabsAdapter extends FragmentStatePagerAdapter {
+    private class StoryTypeTabsAdapter extends FragmentPagerAdapter {
 
         String[] mTabTitleArray;
-        String[] mStoryTypeArray;
+        ArrayList<String> mStoryTypes;
         int mTabCount;
 
         StoryTypeTabsAdapter(FragmentManager fm, Context context) {
             super(fm);
-            mTabTitleArray = context.getResources().getStringArray(R.array.story_type_titles);
-            mStoryTypeArray = context.getResources().getStringArray(R.array.story_type_strings);
+            Resources res = context.getResources();
+            mTabTitleArray = res.getStringArray(R.array.story_type_titles);
+            mStoryTypes = new ArrayList<>(Arrays.asList(res.getStringArray(R.array.story_type_strings)));
             mTabCount = mTabTitleArray.length;
         }
 
@@ -124,9 +105,7 @@ public class StoryListActivity extends AppCompatActivity
 
         @Override
         public Fragment getItem(int i) {
-            HashMap<String, long[]> allStoryIds = mModel.getStoryIds().getValue();
-            if (allStoryIds == null) { return null; }
-            return StoryListFragment.newInstance(mStoryTypeArray[i], allStoryIds.get(mStoryTypeArray[i]));
+            return StoryListFragment.newInstance(mStoryTypes.get(i));
         }
 
         @Override
@@ -135,136 +114,17 @@ public class StoryListActivity extends AppCompatActivity
         }
 
         @Override
-        public int getItemPosition(Object object) {
-            return POSITION_NONE;
-        }
-    }
+        public int getItemPosition(@NonNull Object object) {
+            StoryListFragment fragment = (StoryListFragment) object;
+            String storyType = fragment.getStoryType();
+            int position = mStoryTypes.indexOf(storyType);
 
-
-    /**
-     *
-     * @param itemId
-     */
-    public void startItemLoader(long itemId) {
-        // Create temporary item placeholder in cache to prevent multiple loading
-        Item tempItem = new Item();
-        tempItem.setTitle("Loading...");
-        tempItem.setId(itemId);
-        mItemCache.put(itemId, tempItem);
-
-        Bundle loaderBundle = new Bundle();
-        loaderBundle.putLong(BUNDLE_ITEM_ID, itemId);
-
-        // Init item loader
-        // Quick hack to get unique loader id. Should be OK until HN story id > MAX_INT.
-        getSupportLoaderManager().initLoader((int) itemId, loaderBundle, new ItemLoaderListener());
-    }
-
-    /**
-     *
-     */
-    private class ItemLoaderListener
-            implements LoaderManager.LoaderCallbacks<NetworkUtils.AsyncTaskResult<Item>> {
-
-        private long mItemId;
-
-        @NonNull
-        @Override
-        public Loader<NetworkUtils.AsyncTaskResult<Item>> onCreateLoader(int id, Bundle bundle) {
-            mItemId = bundle.getLong(BUNDLE_ITEM_ID);
-            //Log.d(TAG, "onCreateLoader: " + mItemId);
-            return new ItemLoader(mContext, bundle);
-        }
-
-        @Override
-        public void onLoadFinished(@NonNull Loader<NetworkUtils.AsyncTaskResult<Item>> loader,
-                                   NetworkUtils.AsyncTaskResult<Item> itemAsyncTaskResult) {
-
-            if (itemAsyncTaskResult.hasException()) {
-                // There was an error during data loading
-                Exception ex = itemAsyncTaskResult.getException();
-                Log.d(TAG, "*** onLoadFinished: Exception for item: " + mItemId + ", msg: " + ex.getMessage());
-                //showErrorMessage(getResources().getString(R.string.error_msg_no_data));
-
-                Item errorItem = new Item();
-                errorItem.setTitle("Failed to load " + Long.toString(mItemId));
-                errorItem.setId(mItemId);
-                mItemCache.put(mItemId, errorItem);
-
+            if (position >= 0) {
+                return position;
             }
             else {
-                // Valid results received
-                mItemCache.put(mItemId, itemAsyncTaskResult.getResult());
-
-                // Destroy this loader, otherwise is gets called again during onResume
-                //getLoaderManager().destroyLoader(LOADER_ID_STORY_LIST);
+                return POSITION_NONE;
             }
-
-            // Refresh pager contents
-            mPagerAdapter.notifyDataSetChanged();
-        }
-
-        @Override
-        public void onLoaderReset(@NonNull Loader<NetworkUtils.AsyncTaskResult<Item>> loader) {
-            // Not implemented
-        }
-    }
-
-    private static class ItemLoader extends AsyncTaskLoader<NetworkUtils.AsyncTaskResult<Item>> {
-
-        private NetworkUtils.AsyncTaskResult<Item> mResult;
-        private final long mItemId;
-        private final boolean mUseMockData;
-
-        ItemLoader(@NonNull Context context, Bundle bundle) {
-            super(context);
-            mItemId = bundle.getLong(BUNDLE_ITEM_ID);
-            mUseMockData = true;
-        }
-
-        @Override
-        protected void onStartLoading() {
-            Log.d(TAG, "***onStartLoading: item " + mItemId);
-            if (mResult != null && (mResult.hasResult() || mResult.hasException())) {
-                // If there are already data available, deliver them
-                deliverResult(mResult);
-            }
-            else {
-                // Start loader
-                forceLoad();
-            }
-        }
-
-        @Override
-        protected void onStopLoading() {
-            cancelLoad();
-        }
-
-        @Nullable
-        @Override
-        public NetworkUtils.AsyncTaskResult<Item> loadInBackground() {
-            String jsonItem;
-
-            try {
-                if (mUseMockData) {
-                    // Mock request used for debugging to avoid sending network queries
-                    jsonItem = MockDataUtils.getMockItemJson(getContext(), mItemId);
-                }
-                else {
-                    URL itemUrl = HackerNewsApi.buildItemUrl(mItemId);
-                    jsonItem = NetworkUtils.getResponseFromHttpUrl(itemUrl);
-                }
-
-                HackerNewsApi.HackerNewsJsonResult<Item> itemResult =
-                        HackerNewsApi.getItemFromJson(jsonItem);
-                mResult = new AsyncTaskResult<>(itemResult.getResult(), itemResult.getException());
-            }
-            catch (IOException iex) {
-                Log.e(TAG, String.format("IOException when fetching API item data: %s", iex.getMessage()));
-                mResult = new AsyncTaskResult<>(null, iex);
-            }
-
-            return mResult;
         }
     }
 
