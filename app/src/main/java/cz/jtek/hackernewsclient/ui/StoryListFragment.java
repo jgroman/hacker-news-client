@@ -60,7 +60,7 @@ public class StoryListFragment extends Fragment
 
     // Custom OnStoryClickListener interface, must be implemented by container activity
     public interface OnStoryClickListener {
-        void onStorySelected(int position);
+        void onStorySelected(long itemId);
     }
 
     // This is a callback to onStorySelected in container activity
@@ -101,7 +101,8 @@ public class StoryListFragment extends Fragment
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
 
         mContext = mActivity.getApplicationContext();
 
@@ -125,7 +126,8 @@ public class StoryListFragment extends Fragment
 
         mStoryList = mModel.getStoryIds().getValue().get(mStoryType);
 
-        mStoryListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_story_list, container, false);
+        mStoryListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_story_list,
+                container, false);
 
         mStoryListAdapter = new StoryListAdapter(mActivity, mStoryType, this);
         mStoryListRecyclerView.setAdapter(mStoryListAdapter);
@@ -159,11 +161,11 @@ public class StoryListFragment extends Fragment
     /**
      * Story list item click listener
      *
-     * @param position Id of the clicked list item
+     * @param itemId Clicked item id
      */
     @Override
-    public void onClick(int position) {
-        mStoryClickListenerCallback.onStorySelected(position);
+    public void onClick(long itemId) {
+        mStoryClickListenerCallback.onStorySelected(itemId);
     }
 
     public String getStoryType() {

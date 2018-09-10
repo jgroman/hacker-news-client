@@ -21,38 +21,38 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import cz.jtek.hackernewsclient.R;
+import cz.jtek.hackernewsclient.databinding.ItemStoryBinding;
 import cz.jtek.hackernewsclient.model.Item;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
-import cz.jtek.hackernewsclient.databinding.ItemStoryBinding;
-
-public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.StoryViewHolder> {
+public class CommentListAdapter extends RecyclerView.Adapter<CommentListAdapter.CommentViewHolder> {
 
     @SuppressWarnings("unused")
-    private static final String TAG = StoryListAdapter.class.getSimpleName();
+    private static final String TAG = CommentListAdapter.class.getSimpleName();
 
-    public interface StoryListOnClickListener {
+    public interface CommentListOnClickListener {
         void onClick(long itemId);
     }
 
-    private final StoryListOnClickListener mClickListener;
+    private final CommentListOnClickListener mClickListener;
 
     private StoryListViewModel mModel;
-    private long[] mStoryList;
+    private long[] mCommentList;
 
-    StoryListAdapter(Activity activity, String storyType, StoryListOnClickListener clickListener) {
-        mModel = ViewModelProviders.of((StoryListActivity) activity).get(StoryListViewModel.class);
-        mStoryList = mModel.getStoryIds().getValue().get(storyType);
+    CommentListAdapter(Activity activity, long storyId, CommentListOnClickListener clickListener) {
+        mModel = ViewModelProviders.of((CommentListActivity) activity).get(StoryListViewModel.class);
+        mCommentList = mModel.getStoryItems().getValue().get(storyId).getKids();
         mClickListener = clickListener;
     }
 
-    public class StoryViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+    public class CommentViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private ItemStoryBinding binding;
 
@@ -62,7 +62,7 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.Stor
          *
          * @param view View to be held in holder
          */
-        StoryViewHolder(View view) {
+        CommentViewHolder(View view) {
             super(view);
             binding = DataBindingUtil.bind(view);
             view.setOnClickListener(this);
@@ -80,29 +80,28 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.Stor
         @Override
         public void onClick(View view) {
             int itemPos = getAdapterPosition();
-            long itemId = mStoryList[itemPos];
+            long itemId = mCommentList[itemPos];
             mClickListener.onClick(itemId);
         }
     }
 
     @NonNull
     @Override
-    public StoryListAdapter.StoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public CommentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
         View view = inflater.inflate(R.layout.item_story, parent, false);
-        return new StoryViewHolder(view);
+        return new CommentViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull StoryListAdapter.StoryViewHolder holder, int position) {
-        Item item = mModel.getItem(mStoryList[position], true);
+    public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
+        Item item = mModel.getItem(mCommentList[position], true);
         holder.bind(item);
     }
 
     @Override
     public int getItemCount() {
-        if (mStoryList == null) { return 0; }
-        return mStoryList.length;
+        if (mCommentList == null) { return 0; }
+        return mCommentList.length;
     }
-
 }

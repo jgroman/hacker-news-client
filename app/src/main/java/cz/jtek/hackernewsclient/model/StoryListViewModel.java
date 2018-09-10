@@ -93,6 +93,7 @@ public class StoryListViewModel extends AndroidViewModel {
 
                 // Load story list JSON
                 URL storiesUrl = HackerNewsApi.buildStoriesUrl(storyType);
+                Log.d(TAG, "doInBackground: loading " + storyType);
 
                 try {
                     if (USE_MOCK_DATA) {

@@ -16,17 +16,16 @@
      limitations under the License.
 -->
 
-<resources>
-    <dimen name="activity_horizontal_margin">16dp</dimen>
-    <dimen name="activity_vertical_margin">16dp</dimen>
+<android.support.v7.widget.RecyclerView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rv_comment_list"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:scrollbars="vertical"
+    app:layoutManager="android.support.v7.widget.LinearLayoutManager"
+    tools:listitem="@layout/item_comment"
+    >
 
-    <!-- Story list -->
-    <dimen name="list_ctl_height">100dp</dimen>
-    <dimen name="list_title_text_size">32sp</dimen>
-
-    <!-- Story -->
-    <dimen name="story_ctl_height">80dp</dimen>
-    <dimen name="story_title_text_size">32sp</dimen>
-
-
-</resources>
+</android.support.v7.widget.RecyclerView>

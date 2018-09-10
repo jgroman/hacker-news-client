@@ -19,6 +19,7 @@ package cz.jtek.hackernewsclient.ui;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -55,7 +56,7 @@ public class StoryListActivity extends AppCompatActivity
         setContentView(R.layout.activity_story_list);
 
         TabLayout tabLayout = findViewById(R.id.tablayout_story_type);
-        AppBarLayout appbarLayout = findViewById(R.id.appbar_stories_list);
+        AppBarLayout appbarLayout = findViewById(R.id.appbar_story_list);
 
         mModel = ViewModelProviders.of(this).get(StoryListViewModel.class);
         // Create the observer for story ids which updates the UI
@@ -69,15 +70,17 @@ public class StoryListActivity extends AppCompatActivity
         // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer
         mModel.getStoryIds().observe(this, storiesObserver);
 
-        mViewPager = findViewById(R.id.viewpager_story_type);
+        mViewPager = findViewById(R.id.viewpager_story_list);
         mPagerAdapter = new StoryTypeTabsAdapter(getSupportFragmentManager(), this);
         mViewPager.setAdapter(mPagerAdapter);
         tabLayout.setupWithViewPager(mViewPager);
     }
 
     @Override
-    public void onStorySelected(int position) {
-        // TODO Start comments activity
+    public void onStorySelected(long itemId) {
+        // Starting CommentListActivity
+        Intent intent = CommentListActivity.newInstance(this, itemId);
+        startActivity(intent);
     }
 
     /**
