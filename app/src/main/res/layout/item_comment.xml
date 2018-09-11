@@ -16,20 +16,21 @@
      limitations under the License.
 -->
 
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    >
 
     <data>
         <import type="cz.jtek.hackernewsclient.utils.BindingUtils" />
 
         <variable
             name="comment"
-            type="cz.jtek.hackernewsclient.model.Item"
+            type="cz.jtek.hackernewsclient.data.Item"
             />
     </data>
 
     <RelativeLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@color/colorItemBackground"
@@ -44,7 +45,6 @@
             android:text="@{comment.text}"
             tools:text="Story title"
             />
-
 
     </RelativeLayout>
 

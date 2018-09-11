@@ -5,7 +5,6 @@ import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
 import android.support.v4.util.LongSparseArray;
 import android.util.Log;
 
@@ -14,6 +13,7 @@ import java.net.URL;
 import java.util.HashMap;
 
 import cz.jtek.hackernewsclient.R;
+import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.utils.MockDataUtils;
 import cz.jtek.hackernewsclient.utils.NetworkUtils;
 
@@ -54,6 +54,7 @@ public class StoryListViewModel extends AndroidViewModel {
 
     public Item getItem(long itemId, boolean loadIfNull) {
         LongSparseArray<Item> lsai = getStoryItems().getValue();
+        Log.d(TAG, "getItem: getting " + itemId);
 
         if (lsai != null && lsai.get(itemId) == null && loadIfNull) {
             // Return temporary Item before real data are loaded

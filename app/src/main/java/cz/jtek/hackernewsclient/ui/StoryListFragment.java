@@ -16,7 +16,6 @@
 
 package cz.jtek.hackernewsclient.ui;
 
-import android.app.Activity;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
@@ -27,13 +26,12 @@ import android.support.v4.app.Fragment;
 import android.support.v4.util.LongSparseArray;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import cz.jtek.hackernewsclient.R;
-import cz.jtek.hackernewsclient.model.Item;
+import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
 public class StoryListFragment extends Fragment
@@ -43,7 +41,7 @@ public class StoryListFragment extends Fragment
     static final String TAG = StoryListFragment.class.getSimpleName();
 
     // Bundle arguments
-    public static final String BUNDLE_STORY_TYPE = "story-type";
+    private static final String BUNDLE_STORY_TYPE = "story-type";
 
     // Instance state bundle keys
     private static final String KEY_STORY_TYPE = BUNDLE_STORY_TYPE;
@@ -107,12 +105,11 @@ public class StoryListFragment extends Fragment
         mContext = mActivity.getApplicationContext();
 
         if (savedInstanceState != null) {
-            // Restoring story type and list from saved instance state
+            // Restoring story type from saved instance state
             mStoryType = savedInstanceState.getString(KEY_STORY_TYPE);
-            //Log.d(TAG, "*** StoryListFragment onCreateView restoring: " + mStoryType);
         }
         else {
-            // Get story type and list from passed arguments
+            // Get story type from passed arguments
             Bundle args = getArguments();
             if (args != null) {
 
@@ -120,10 +117,9 @@ public class StoryListFragment extends Fragment
                     mStoryType = args.getString(BUNDLE_STORY_TYPE);
                 }
             }
-
-            //Log.d(TAG, "*** StoryListFragment onCreateView full load: " + mStoryType);
         }
 
+        // Get list of story ids from ViewModel
         mStoryList = mModel.getStoryIds().getValue().get(mStoryType);
 
         mStoryListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_story_list,
@@ -165,6 +161,7 @@ public class StoryListFragment extends Fragment
      */
     @Override
     public void onClick(long itemId) {
+        // OnClick event is passed to activity
         mStoryClickListenerCallback.onStorySelected(itemId);
     }
 

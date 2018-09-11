@@ -21,13 +21,12 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import cz.jtek.hackernewsclient.R;
-import cz.jtek.hackernewsclient.model.Item;
+import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
 import cz.jtek.hackernewsclient.databinding.ItemStoryBinding;
@@ -54,6 +53,7 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.Stor
 
     public class StoryViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
+        // Binding class name is generated from layout filename: item_story.xml
         private ItemStoryBinding binding;
 
         /**

@@ -23,7 +23,7 @@
 
         <variable
             name="item"
-            type="cz.jtek.hackernewsclient.model.Item"
+            type="cz.jtek.hackernewsclient.data.Item"
             />
     </data>
 

@@ -27,6 +27,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
+import cz.jtek.hackernewsclient.data.Item;
+
 public class HackerNewsApi {
 
     // API docs: https://github.com/HackerNews/API

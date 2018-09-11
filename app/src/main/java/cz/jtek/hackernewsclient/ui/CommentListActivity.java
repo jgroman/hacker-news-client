@@ -37,9 +37,11 @@ public class CommentListActivity extends AppCompatActivity
     // Extras
     public static final String EXTRA_STORY_ID = "story-id";
 
-    public StoryListViewModel mModel;
     private CollapsingToolbarLayout mToolbarLayout;
     private Toolbar mToolbar;
+
+    public StoryListViewModel mModel;
+    private long mStoryId;
 
 
     public static Intent newInstance(AppCompatActivity activity, long storyId) {
@@ -52,6 +54,20 @@ public class CommentListActivity extends AppCompatActivity
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_comment_list);
+
+        if (savedInstanceState == null) {
+            // Get story id from intent extras
+            Intent intent = getIntent();
+            if (intent == null) { return; }
+
+            if (intent.hasExtra(EXTRA_STORY_ID)) {
+                mStoryId = intent.getLongExtra(EXTRA_STORY_ID, 0);
+            }
+        }
+        else {
+            // Retrieve story id from saved state
+            mStoryId = savedInstanceState.getLong(EXTRA_STORY_ID);
+        }
 
         mModel = ViewModelProviders.of(this).get(StoryListViewModel.class);
 
@@ -68,11 +84,18 @@ public class CommentListActivity extends AppCompatActivity
         });
 
         mToolbar.setTitle("blah");
+
+        // Create comment list fragment
+        CommentListFragment commentListFragment = CommentListFragment.newInstance(mStoryId);
+        getSupportFragmentManager().beginTransaction()
+                .replace(R.id.comment_list_fragment_container, commentListFragment)
+                .commit();
     }
 
 
     /**
      * Comment click listener
+     * Gets events from underlying fragment
      *
      * @param itemId Comment item id
      */

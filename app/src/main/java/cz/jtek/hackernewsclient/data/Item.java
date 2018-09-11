@@ -1,10 +1,29 @@
-package cz.jtek.hackernewsclient.model;
+/*
+ * Copyright 2018 Jaroslav Groman
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+package cz.jtek.hackernewsclient.data;
+
+import android.arch.persistence.room.ColumnInfo;
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.PrimaryKey;
 import android.databinding.BaseObservable;
 import android.databinding.Bindable;
-import android.databinding.BindingAdapter;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,41 +33,73 @@ import java.util.ArrayList;
 
 import cz.jtek.hackernewsclient.BR;
 
+@Entity(tableName = Item.TABLE_NAME)
 public class Item extends BaseObservable implements Parcelable {
 
     @SuppressWarnings("unused")
     private static final String TAG = Item.class.getSimpleName();
 
-    // JSON field string ids
-    private static final String ITEM_ID = "id";
-    private static final String DELETED = "deleted";
-    private static final String TYPE = "type";
-    private static final String BY = "by";
-    private static final String TEXT = "text";
-    private static final String DEAD = "dead";
-    private static final String PARENT = "parent";
-    private static final String POLL = "poll";
-    private static final String KIDS = "kids";
-    private static final String URL = "url";
-    private static final String SCORE = "score";
-    private static final String TITLE = "title";
-    private static final String PARTS = "parts";
-    private static final String DESCENDANTS = "descendants";
+    public static final String TABLE_NAME = "items";
+
+    // JSON field string ids, also Room column names
+    public static final String ID = "id";
+    public static final String DELETED = "deleted";
+    public static final String TYPE = "type";
+    public static final String BY = "by";
+    public static final String TEXT = "text";
+    public static final String DEAD = "dead";
+    public static final String PARENT = "parent";
+    public static final String POLL = "poll";
+    public static final String KIDS = "kids";
+    public static final String URL = "url";
+    public static final String SCORE = "score";
+    public static final String TITLE = "title";
+    public static final String PARTS = "parts";
+    public static final String DESCENDANTS = "descendants";
 
     // Members
+    @PrimaryKey
+    @ColumnInfo(index = true, name = ID)
     private long id;
+
+    @ColumnInfo(name = DELETED)
     private Boolean deleted;
+
+    @NonNull
+    @ColumnInfo(name = TYPE)
     private String type;
+
+    @ColumnInfo(name = BY)
     private String by;
+
+    @ColumnInfo(name = TEXT)
     private String text;
+
+    @ColumnInfo(name = DEAD)
     private Boolean dead;
+
+    @ColumnInfo(name = PARENT)
     private long parent;
+
+    @ColumnInfo(name = POLL)
     private long poll;
-    private long[] kids;
+
+    @ColumnInfo(name = KIDS)
+    private ArrayList<Long> kids;
+
+    @ColumnInfo(name = URL)
     private String url;
+
+    @ColumnInfo(name = SCORE)
     private int score;
+
+    @ColumnInfo(name = TITLE)
     private String title;
-    private long[] parts;
+
+    @ColumnInfo(name = PARTS)
+    private ArrayList<Long> parts;
+
+    @ColumnInfo(name = DESCENDANTS)
     private int descendants;
 
     // Getters & Setters
@@ -109,8 +160,8 @@ public class Item extends BaseObservable implements Parcelable {
     }
 
     @Bindable
-    public long[] getKids() { return kids; }
-    public void setKids(long[] kids) {
+    public ArrayList<Long> getKids() { return kids; }
+    public void setKids(ArrayList<Long> kids) {
         this.kids = kids;
         notifyPropertyChanged(BR.kids);
     }
@@ -137,8 +188,8 @@ public class Item extends BaseObservable implements Parcelable {
     }
 
     @Bindable
-    public long[] getParts() { return parts; }
-    public void setParts(long[] parts) {
+    public ArrayList<Long> getParts() { return parts; }
+    public void setParts(ArrayList<Long> parts) {
         this.parts = parts;
         notifyPropertyChanged(BR.parts);
     }
@@ -149,13 +200,6 @@ public class Item extends BaseObservable implements Parcelable {
         this.descendants = descendants;
         notifyPropertyChanged(BR.descendants);
     }
-
-    /*
-    @BindingAdapter("bind:itemId")
-    public static void loadItem(long itemId) {
-
-    }
-    */
 
     // Default constructor
     public Item() {
@@ -179,7 +223,7 @@ public class Item extends BaseObservable implements Parcelable {
     public static Item fromJson(JSONObject jo) {
         Item item = new Item();
 
-        item.setId(jo.optLong(ITEM_ID));
+        item.setId(jo.optLong(ID));
         item.setDeleted(jo.optBoolean(DELETED));
         item.setType(jo.optString(TYPE, null));
         item.setBy(jo.optString(BY, null));
@@ -190,9 +234,9 @@ public class Item extends BaseObservable implements Parcelable {
 
         JSONArray ja = jo.optJSONArray(KIDS);
         if (ja != null) {
-            long[] arrKids = new long[ja.length()];
+            ArrayList<Long> arrKids = new ArrayList<>();
             for (int i = 0; i < ja.length(); ++i) {
-                arrKids[i] = ja.optLong(i);
+                arrKids.add(ja.optLong(i));
             }
             item.setKids(arrKids);
         }
@@ -203,9 +247,9 @@ public class Item extends BaseObservable implements Parcelable {
 
         ja = jo.optJSONArray(PARTS);
         if (ja != null) {
-            long[] arrParts = new long[ja.length()];
+            ArrayList<Long> arrParts = new ArrayList<>();
             for (int i = 0; i < ja.length(); ++i) {
-                arrParts[i] = ja.optLong(i);
+                arrParts.add(ja.optLong(i));
             }
             item.setParts(arrParts);
         }
@@ -247,11 +291,11 @@ public class Item extends BaseObservable implements Parcelable {
         parcel.writeInt(this.dead ? 1 : 0);
         parcel.writeLong(this.parent);
         parcel.writeLong(this.poll);
-        parcel.writeLongArray(this.kids);
+        parcel.writeList(this.kids);
         parcel.writeString(this.url);
         parcel.writeInt(this.score);
         parcel.writeString(this.title);
-        parcel.writeLongArray(this.parts);
+        parcel.writeList(this.parts);
         parcel.writeInt(this.descendants);
     }
 
@@ -265,13 +309,13 @@ public class Item extends BaseObservable implements Parcelable {
         this.dead = in.readInt() != 0;
         this.parent = in.readLong();
         this.poll = in.readLong();
-        if (this.kids == null) { this.kids = new long[1]; }
-        in.readLongArray(this.kids);
+        if (this.kids == null) { this.kids = new ArrayList<>(); }
+        in.readList(this.kids, null);
         this.url = in.readString();
         this.score = in.readInt();
         this.title = in.readString();
-        if (this.parts == null) { this.parts = new long[1]; }
-        in.readLongArray(this.parts);
+        if (this.parts == null) { this.parts = new ArrayList<>(); }
+        in.readList(this.parts, null);
         this.descendants = in.readInt();
     }
 
