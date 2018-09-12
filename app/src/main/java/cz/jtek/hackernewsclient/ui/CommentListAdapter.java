@@ -29,7 +29,7 @@ import android.view.ViewGroup;
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.databinding.ItemStoryBinding;
 import cz.jtek.hackernewsclient.data.Item;
-import cz.jtek.hackernewsclient.model.StoryListViewModel;
+import cz.jtek.hackernewsclient.model.ItemViewModel;
 
 public class CommentListAdapter extends RecyclerView.Adapter<CommentListAdapter.CommentViewHolder> {
 
@@ -42,14 +42,14 @@ public class CommentListAdapter extends RecyclerView.Adapter<CommentListAdapter.
 
     private final CommentListOnClickListener mClickListener;
 
-    private StoryListViewModel mModel;
+    private ItemViewModel mModel;
     private long[] mCommentList;
 
     CommentListAdapter(Activity activity, long storyId, CommentListOnClickListener clickListener) {
-        mModel = ViewModelProviders.of((CommentListActivity) activity).get(StoryListViewModel.class);
+        mModel = ViewModelProviders.of((CommentListActivity) activity).get(ItemViewModel.class);
         // At his point an item is fully loaded in ViewModel, its kids are available
         Log.d(TAG, "CommentListAdapter: getting kids from " + storyId);
-        mCommentList = mModel.getItem(storyId, false).getKids();
+        //mCommentList = mModel.getItem(storyId, false).getKids();
         mClickListener = clickListener;
     }
 
@@ -97,7 +97,7 @@ public class CommentListAdapter extends RecyclerView.Adapter<CommentListAdapter.
 
     @Override
     public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
-        Item item = mModel.getItem(mCommentList[position], true);
+        Item item = mModel.getItem(mCommentList[position]);
         holder.bind(item);
     }
 

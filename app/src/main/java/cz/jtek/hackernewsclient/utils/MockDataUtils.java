@@ -63,7 +63,7 @@ public class MockDataUtils {
      * from /res/raw directory.
      *
      * @param resources     Current context
-     * @param storyType   Story type string
+     * @param storyType   StoryList type string
      * @return File contents
      */
     public static String getMockStoriesJson(Resources resources, String packageName, String storyType) throws IOException {

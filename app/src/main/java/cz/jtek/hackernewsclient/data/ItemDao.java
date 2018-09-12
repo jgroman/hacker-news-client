@@ -34,9 +34,9 @@ public interface ItemDao {
     void deleteAll();
 
     @Query("SELECT * FROM " + Item.TABLE_NAME)
-    LiveData<List<Item>> loadAllItems();
+    LiveData<List<Item>> getAllItems();
 
     @Query("SELECT * FROM " + Item.TABLE_NAME + " WHERE " + Item.ID + " = :itemId")
-    LiveData<Item> loadItem(long itemId);
+    Item getItem(long itemId);
 
 }

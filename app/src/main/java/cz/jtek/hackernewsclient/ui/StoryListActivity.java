@@ -31,12 +31,14 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.List;
 
 import cz.jtek.hackernewsclient.R;
+import cz.jtek.hackernewsclient.data.StoryList;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
 public class StoryListActivity extends AppCompatActivity
@@ -59,16 +61,16 @@ public class StoryListActivity extends AppCompatActivity
         AppBarLayout appbarLayout = findViewById(R.id.appbar_story_list);
 
         mModel = ViewModelProviders.of(this).get(StoryListViewModel.class);
-        // Create the observer for story ids which updates the UI
-        final Observer<HashMap<String, long[]>> storiesObserver = new Observer<HashMap<String, long[]>>() {
+        // Create the observer for stories which updates the UI
+        final Observer<List<StoryList>> storiesObserver = new Observer<List<StoryList>>() {
             @Override
-            public void onChanged(@Nullable final HashMap<String, long[]> storyIds) {
-                //Log.d(TAG, "onChanged: stories");
+            public void onChanged(@Nullable final List<StoryList> storyLists) {
+                Log.d(TAG, "onChanged: stories");
                 mPagerAdapter.notifyDataSetChanged();
             }
         };
         // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer
-        mModel.getStoryIds().observe(this, storiesObserver);
+        mModel.getAllStoryLists().observe(this, storiesObserver);
 
         mViewPager = findViewById(R.id.viewpager_story_list);
         mPagerAdapter = new StoryTypeTabsAdapter(getSupportFragmentManager(), this);

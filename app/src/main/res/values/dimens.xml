@@ -20,11 +20,11 @@
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
 
-    <!-- Story list -->
+    <!-- StoryList list -->
     <dimen name="list_ctl_height">100dp</dimen>
     <dimen name="list_title_text_size">32sp</dimen>
 
-    <!-- Story -->
+    <!-- StoryList -->
     <dimen name="story_ctl_height">80dp</dimen>
     <dimen name="story_title_text_size">32sp</dimen>
 

@@ -22,7 +22,7 @@ import android.arch.persistence.room.RoomDatabase;
 import android.arch.persistence.room.TypeConverters;
 import android.content.Context;
 
-@Database(entities = {Item.class, Story.class}, version = 1)
+@Database(entities = {Item.class, StoryList.class}, version = 1)
 @TypeConverters({Converters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -30,9 +30,9 @@ public abstract class AppDatabase extends RoomDatabase {
     private static final String DB_NAME = "hnc_db";
 
     /**
-     * @return The DAO for the Story table.
+     * @return The DAO for the StoryList table.
      */
-    public abstract StoryDao storyDao();
+    public abstract StoryListDao storyListDao();
 
     /**
      * @return The DAO for the Item table.

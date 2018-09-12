@@ -26,6 +26,7 @@ import org.json.JSONObject;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import cz.jtek.hackernewsclient.data.Item;
 
@@ -118,14 +119,13 @@ public class HackerNewsApi {
      * @param storiesJsonString
      * @return
      */
-    public static HackerNewsJsonResult<long[]> getStoriesFromJson(String storiesJsonString) {
-        long[] stories;
+    public static HackerNewsJsonResult<ArrayList<Long>> getStoriesFromJson(String storiesJsonString) {
+        ArrayList<Long> stories = new ArrayList<>();
 
         try {
             JSONArray ja = new JSONArray(storiesJsonString);
-            stories = new long[ja.length()];
             for (int i = 0; i < ja.length(); ++i) {
-                stories[i] = ja.optLong(i);
+                stories.add(ja.optLong(i));
             }
             return new HackerNewsJsonResult<>(stories, null);
         }

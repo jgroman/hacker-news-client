@@ -30,8 +30,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.List;
+
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.data.Item;
+import cz.jtek.hackernewsclient.model.ItemViewModel;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
 public class CommentListFragment extends Fragment
@@ -47,7 +50,7 @@ public class CommentListFragment extends Fragment
     private static final String KEY_STORY_ID = BUNDLE_STORY_ID;
 
     private CommentListActivity mActivity;
-    private StoryListViewModel mModel;
+    private ItemViewModel mModel;
     private long mStoryId;
     private RecyclerView mCommentListRecyclerView;
     private CommentListAdapter mCommentListAdapter;
@@ -90,7 +93,7 @@ public class CommentListFragment extends Fragment
         mActivity = (CommentListActivity) getActivity();
         if (null == mActivity) { return; }
 
-        mModel = ViewModelProviders.of(getActivity()).get(StoryListViewModel.class);
+        mModel = ViewModelProviders.of(getActivity()).get(ItemViewModel.class);
     }
 
     @Nullable
@@ -125,16 +128,16 @@ public class CommentListFragment extends Fragment
         mCommentListRecyclerView.setHasFixedSize(true);
 
         // Observer for comment items
-        final Observer<LongSparseArray<Item>> commentsObserver = new Observer<LongSparseArray<Item>>() {
+        final Observer<List<Item>> commentsObserver = new Observer<List<Item>>() {
             @Override
-            public void onChanged(@Nullable LongSparseArray<Item> itemLongSparseArray) {
+            public void onChanged(@Nullable List<Item> itemList) {
                 // On comment changes update adapter contents
                 mCommentListAdapter.notifyDataSetChanged();
             }
         };
 
         // Start observing comment LiveData
-        mModel.getStoryItems().observe(this, commentsObserver);
+        mModel.getAllItems().observe(this, commentsObserver);
 
         return mCommentListRecyclerView;
     }

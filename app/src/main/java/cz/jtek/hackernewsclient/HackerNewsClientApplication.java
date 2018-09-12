@@ -20,14 +20,25 @@ import android.app.Application;
 
 import com.facebook.stetho.Stetho;
 
+import cz.jtek.hackernewsclient.data.AppDatabase;
+import cz.jtek.hackernewsclient.data.DataRepository;
+
 public class HackerNewsClientApplication extends Application {
 
     public void onCreate() {
         super.onCreate();
 
-        if (BuildConfig.DEBUG) {
+        //if (BuildConfig.DEBUG) {
             // Initialize Stetho only for debug builds
             Stetho.initializeWithDefaults(this);
-        }
+        //}
+    }
+
+    public AppDatabase getDatabase() {
+        return AppDatabase.getInstance(this);
+    }
+
+    public DataRepository getRepository() {
+        return DataRepository.getInstance(this, getDatabase());
     }
 }

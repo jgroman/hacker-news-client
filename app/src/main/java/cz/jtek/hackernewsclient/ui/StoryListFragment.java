@@ -16,6 +16,7 @@
 
 package cz.jtek.hackernewsclient.ui;
 
+import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
@@ -26,12 +27,17 @@ import android.support.v4.app.Fragment;
 import android.support.v4.util.LongSparseArray;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.List;
+
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.data.Item;
+import cz.jtek.hackernewsclient.data.StoryList;
+import cz.jtek.hackernewsclient.model.ItemViewModel;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
 public class StoryListFragment extends Fragment
@@ -48,13 +54,15 @@ public class StoryListFragment extends Fragment
 
     private Context mContext;
     private String mStoryType;
+    private LiveData<List<StoryList>> mStories;
     private long[] mStoryList;
     private RecyclerView mStoryListRecyclerView;
     private StoryListAdapter mStoryListAdapter;
     private LinearLayoutManager mLayoutManager;
 
     private StoryListActivity mActivity;
-    private StoryListViewModel mModel;
+
+    private ItemViewModel mItemModel;
 
     // Custom OnStoryClickListener interface, must be implemented by container activity
     public interface OnStoryClickListener {
@@ -94,7 +102,7 @@ public class StoryListFragment extends Fragment
         mActivity = (StoryListActivity) getActivity();
         if (null == mActivity) { return; }
 
-        mModel = ViewModelProviders.of(getActivity()).get(StoryListViewModel.class);
+        mItemModel = ViewModelProviders.of(getActivity()).get(ItemViewModel.class);
     }
 
     @Nullable
@@ -119,9 +127,6 @@ public class StoryListFragment extends Fragment
             }
         }
 
-        // Get list of story ids from ViewModel
-        mStoryList = mModel.getStoryIds().getValue().get(mStoryType);
-
         mStoryListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_story_list,
                 container, false);
 
@@ -133,15 +138,15 @@ public class StoryListFragment extends Fragment
         mStoryListRecyclerView.setHasFixedSize(true);
 
         // Create the observer for story items which updates the UI
-        final Observer<LongSparseArray<Item>> itemsObserver = new Observer<LongSparseArray<Item>>() {
+        final Observer<List<Item>> itemsObserver = new Observer<List<Item>>() {
             @Override
-            public void onChanged(@Nullable LongSparseArray<Item> itemLongSparseArray) {
-                //Log.d(TAG, "onChanged: items");
+            public void onChanged(@Nullable List<Item> itemList) {
+                Log.d(TAG, "onChanged: items");
                 mStoryListAdapter.notifyDataSetChanged();
             }
         };
         // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer
-        mModel.getStoryItems().observe(this, itemsObserver);
+        mItemModel.getAllItems().observe(this, itemsObserver);
 
         return mStoryListRecyclerView;
     }
@@ -155,7 +160,7 @@ public class StoryListFragment extends Fragment
     }
 
     /**
-     * Story list item click listener
+     * StoryList list item click listener
      *
      * @param itemId Clicked item id
      */

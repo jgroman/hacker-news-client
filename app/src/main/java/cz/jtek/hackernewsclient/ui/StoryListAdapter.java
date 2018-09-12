@@ -21,12 +21,17 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
+
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.data.Item;
+import cz.jtek.hackernewsclient.data.StoryList;
+import cz.jtek.hackernewsclient.model.ItemViewModel;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
 import cz.jtek.hackernewsclient.databinding.ItemStoryBinding;
@@ -42,12 +47,23 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.Stor
 
     private final StoryListOnClickListener mClickListener;
 
-    private StoryListViewModel mModel;
-    private long[] mStoryList;
+    private StoryListViewModel mStoryListModel;
+    private ItemViewModel mItemModel;
+
+    private ArrayList<Long> mStories;
 
     StoryListAdapter(Activity activity, String storyType, StoryListOnClickListener clickListener) {
-        mModel = ViewModelProviders.of((StoryListActivity) activity).get(StoryListViewModel.class);
-        mStoryList = mModel.getStoryIds().getValue().get(storyType);
+        mStoryListModel = ViewModelProviders.of((StoryListActivity) activity).get(StoryListViewModel.class);
+        mItemModel = ViewModelProviders.of((StoryListActivity) activity).get(ItemViewModel.class);
+
+        StoryList storyList = mStoryListModel.getStoryList(storyType);
+        if (storyList != null) {
+            mStories = storyList.getStories();
+            Log.d(TAG, "StoryListAdapter: " + mStories.get(1));
+        }
+        else {
+            mStories = new ArrayList<>();
+        }
         mClickListener = clickListener;
     }
 
@@ -80,7 +96,7 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.Stor
         @Override
         public void onClick(View view) {
             int itemPos = getAdapterPosition();
-            long itemId = mStoryList[itemPos];
+            long itemId = mStories.get(itemPos);
             mClickListener.onClick(itemId);
         }
     }
@@ -95,14 +111,14 @@ public class StoryListAdapter extends RecyclerView.Adapter<StoryListAdapter.Stor
 
     @Override
     public void onBindViewHolder(@NonNull StoryListAdapter.StoryViewHolder holder, int position) {
-        Item item = mModel.getItem(mStoryList[position], true);
+        Item item = mItemModel.getItem(mStories.get(position));
         holder.bind(item);
     }
 
     @Override
     public int getItemCount() {
-        if (mStoryList == null) { return 0; }
-        return mStoryList.length;
+        if (mStories == null) { return 0; }
+        return mStories.size();
     }
 
 }

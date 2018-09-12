@@ -16,27 +16,24 @@
 
 package cz.jtek.hackernewsclient.data;
 
-import android.arch.persistence.room.ColumnInfo;
-import android.arch.persistence.room.Entity;
-import android.arch.persistence.room.PrimaryKey;
+import android.arch.lifecycle.LiveData;
+import android.arch.persistence.room.Dao;
+import android.arch.persistence.room.Insert;
+import android.arch.persistence.room.OnConflictStrategy;
+import android.arch.persistence.room.Query;
 
-import java.util.ArrayList;
+import java.util.List;
 
-@Entity(tableName = Story.TABLE_NAME)
-public class Story {
+@Dao
+public interface StoryListDao {
 
-    @SuppressWarnings("unused")
-    private static final String TAG = Story.class.getSimpleName();
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insert(StoryList storyList);
 
-    public static final String TABLE_NAME = "stories";
-    public static final String COL_TYPE = "type";
-    public static final String COL_STORIES = "stories";
+    @Query("SELECT * FROM " + StoryList.TABLE_NAME)
+    LiveData<List<StoryList>> getAllStoryLists();
 
-    @PrimaryKey
-    @ColumnInfo(name = COL_TYPE)
-    private String type;
-
-    @ColumnInfo(name = COL_STORIES)
-    private ArrayList<Long> stories;
+    @Query("SELECT * FROM " + StoryList.TABLE_NAME + " WHERE " + StoryList.COL_TYPE + " = :storyType")
+    StoryList getStoryList(String storyType);
 
 }
