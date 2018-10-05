@@ -24,7 +24,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.util.LongSparseArray;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -32,6 +31,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import cz.jtek.hackernewsclient.R;
@@ -39,6 +39,7 @@ import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.data.StoryList;
 import cz.jtek.hackernewsclient.model.ItemViewModel;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
+import cz.jtek.hackernewsclient.model.StoryListViewModelFactory;
 
 public class StoryListFragment extends Fragment
     implements StoryListAdapter.StoryListOnClickListener {
@@ -57,12 +58,12 @@ public class StoryListFragment extends Fragment
     private LiveData<List<StoryList>> mStories;
     private long[] mStoryList;
     private RecyclerView mStoryListRecyclerView;
-    private StoryListAdapter mStoryListAdapter;
     private LinearLayoutManager mLayoutManager;
 
     private StoryListActivity mActivity;
 
     private ItemViewModel mItemModel;
+    public StoryListViewModel mStoryListModel;
 
     // Custom OnStoryClickListener interface, must be implemented by container activity
     public interface OnStoryClickListener {
@@ -100,15 +101,14 @@ public class StoryListFragment extends Fragment
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mActivity = (StoryListActivity) getActivity();
-        if (null == mActivity) { return; }
-
-        mItemModel = ViewModelProviders.of(getActivity()).get(ItemViewModel.class);
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
+        if (null == mActivity) { return null; }
 
         mContext = mActivity.getApplicationContext();
 
@@ -127,26 +127,43 @@ public class StoryListFragment extends Fragment
             }
         }
 
+        mStoryListModel = ViewModelProviders.of(this,
+                new StoryListViewModelFactory(mActivity.getApplication(), mStoryType))
+                .get(StoryListViewModel.class);
+
+        mItemModel = ViewModelProviders.of(mActivity).get(ItemViewModel.class);
+
+
         mStoryListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_story_list,
                 container, false);
-
-        mStoryListAdapter = new StoryListAdapter(mActivity, mStoryType, this);
-        mStoryListRecyclerView.setAdapter(mStoryListAdapter);
 
         mLayoutManager = new LinearLayoutManager(mContext);
         mStoryListRecyclerView.setLayoutManager(mLayoutManager);
         mStoryListRecyclerView.setHasFixedSize(true);
 
-        // Create the observer for story items which updates the UI
-        final Observer<List<Item>> itemsObserver = new Observer<List<Item>>() {
-            @Override
-            public void onChanged(@Nullable List<Item> itemList) {
-                Log.d(TAG, "onChanged: items");
-                mStoryListAdapter.notifyDataSetChanged();
-            }
+        final StoryListAdapter adapter = new StoryListAdapter(mActivity, this);
+
+        // Create the observer for story item list which updates the UI
+        final Observer<ArrayList<Long>> itemListObserver = itemList -> {
+            if (itemList != null && itemList.size() > 0)
+                Log.d(TAG, "*** onChanged: itemList, updating list adapter: " + mStoryType);
+            else
+                Log.d(TAG, "*** onChanged: itemList, list null");
+            adapter.submitList(itemList);
+        };
+        // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer
+        mStoryListModel.getTypedStoryList().observe(this, itemListObserver);
+
+        // Create the observer for items which updates the UI
+        final Observer<List<Item>> itemsObserver = item -> {
+            Log.d(TAG, "*** adapter item livedata updated ");
+            adapter.notifyDataSetChanged();
+            //adapter.submitList(itemList);
         };
         // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer
         mItemModel.getAllItems().observe(this, itemsObserver);
+
+        mStoryListRecyclerView.setAdapter(adapter);
 
         return mStoryListRecyclerView;
     }

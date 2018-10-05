@@ -6,6 +6,7 @@ import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
 import android.arch.lifecycle.Observer;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.util.List;
 
@@ -26,19 +27,15 @@ public class ItemViewModel extends AndroidViewModel {
         super(application);
 
         mObservableItems = new MediatorLiveData<>();
-        // Set by default null, until we get data from the database.
+        // By default set to null until we get data from the database
         mObservableItems.setValue(null);
 
         mRepository = ((HackerNewsClientApplication) application).getRepository();
+
         LiveData<List<Item>> items = mRepository.getAllItems();
 
-        mObservableItems.addSource(items, new Observer<List<Item>>() {
-            @Override
-            public void onChanged(@Nullable List<Item> value) {
-                mObservableItems.setValue(value);
-            }
-        });
-
+        // Observe changes of items in the database and forward them
+        mObservableItems.addSource(items, mObservableItems::setValue);
     }
 
 

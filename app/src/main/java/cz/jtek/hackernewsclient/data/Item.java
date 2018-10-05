@@ -24,6 +24,7 @@ import android.databinding.Bindable;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.support.v7.util.DiffUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -324,6 +325,55 @@ public class Item extends BaseObservable implements Parcelable {
         public Item createFromParcel(Parcel in) { return new Item(in); }
         public Item[] newArray(int size) { return new Item[size]; }
     };
+
+    /**
+     * Diff callback
+     * Used by ListAdapter
+     *
+     */
+    public static final DiffUtil.ItemCallback<Item> DIFF_CALLBACK =
+            new DiffUtil.ItemCallback<Item>() {
+                @Override
+                public boolean areItemsTheSame(@NonNull Item oldItem, @NonNull Item newItem) {
+                    // Item properties may have changed if reloaded from the DB, but ID is fixed
+                    return oldItem.getId() == newItem.getId();
+                }
+                @Override
+                public boolean areContentsTheSame(@NonNull Item oldItem, @NonNull Item newItem) {
+                    // NOTE: if you use equals, your object must properly override Object#equals()
+                    // Incorrectly returning false here will result in too many animations.
+
+                    ArrayList<Long> oldList, newList;
+
+                    if (oldItem.getId() != newItem.getId()) return false;
+                    if (oldItem.getDeleted() != newItem.getDeleted()) return false;
+                    if (!oldItem.getType().equals(newItem.getType())) return false;
+                    if (!oldItem.getBy().equals(newItem.getBy())) return false;
+                    if (!oldItem.getText().equals(newItem.getText())) return false;
+                    if (oldItem.getDead() != newItem.getDead()) return false;
+                    if (oldItem.getParent() != newItem.getParent()) return false;
+                    if (oldItem.getPoll() != newItem.getPoll()) return false;
+
+                    oldList = oldItem.getKids();
+                    newList = newItem.getKids();
+                    if (!oldList.containsAll(newList) || !newList.containsAll(oldList))
+                        return false;
+
+                    if (!oldItem.getUrl().equals(newItem.getUrl())) return false;
+                    if (oldItem.getScore() != newItem.getScore()) return false;
+                    if (!oldItem.getTitle().equals(newItem.getTitle())) return false;
+
+                    oldList = oldItem.getParts();
+                    newList = newItem.getParts();
+                    if (!oldList.containsAll(newList) || !newList.containsAll(oldList))
+                        return false;
+
+                    if (oldItem.getDescendants() != newItem.getDescendants()) return false;
+
+                    return true;
+                }
+            };
+
 }
 
 

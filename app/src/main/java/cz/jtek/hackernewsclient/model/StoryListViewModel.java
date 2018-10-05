@@ -4,17 +4,14 @@ import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.Observer;
-import android.support.annotation.Nullable;
-import android.support.v4.util.LongSparseArray;
+import android.arch.lifecycle.Transformations;
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import cz.jtek.hackernewsclient.HackerNewsClientApplication;
 import cz.jtek.hackernewsclient.data.DataRepository;
-import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.data.StoryList;
 
 public class StoryListViewModel extends AndroidViewModel {
@@ -26,26 +23,25 @@ public class StoryListViewModel extends AndroidViewModel {
 
     private final MediatorLiveData<List<StoryList>> mObservableStoryLists;
 
-    private MutableLiveData<LongSparseArray<Item>> storyItems;
+    private final LiveData<ArrayList<Long>> mObservableTypedStoryList;
 
-    public StoryListViewModel(Application application) {
+    public StoryListViewModel(Application application, String storyType) {
         super(application);
 
         mObservableStoryLists = new MediatorLiveData<>();
-        // set by default null, until we get data from the database.
+        // By default set to null until we get data from the database
         mObservableStoryLists.setValue(null);
 
         mRepository = ((HackerNewsClientApplication) application).getRepository();
 
         LiveData<List<StoryList>> storyLists = mRepository.getAllStoryLists();
 
-        // observe the changes of the story lists from the database and forward them
-        mObservableStoryLists.addSource(storyLists, new Observer<List<StoryList>>() {
-            @Override
-            public void onChanged(@Nullable List<StoryList> value) {
-                mObservableStoryLists.setValue(value);
-            }
-        });
+        // Observe the changes of the story lists from the database and forward them
+        mObservableStoryLists.addSource(storyLists, mObservableStoryLists::setValue);
+
+        mObservableTypedStoryList = Transformations.switchMap(mObservableStoryLists,
+                (List<StoryList> stories) -> mRepository.getTypedStoryList(stories, storyType));
+
     }
 
     /**
@@ -55,13 +51,6 @@ public class StoryListViewModel extends AndroidViewModel {
         return mObservableStoryLists;
     }
 
-    /**
-     *
-     * @param storyType
-     * @return
-     */
-    public StoryList getStoryList(String storyType) {
-        return mRepository.getStoryList(storyType);
-    }
+    public LiveData<ArrayList<Long>> getTypedStoryList() { return mObservableTypedStoryList; }
 
 }

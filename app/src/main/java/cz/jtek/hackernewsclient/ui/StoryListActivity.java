@@ -40,6 +40,7 @@ import java.util.List;
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.data.StoryList;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
+import cz.jtek.hackernewsclient.model.StoryListViewModelFactory;
 
 public class StoryListActivity extends AppCompatActivity
         implements StoryListFragment.OnStoryClickListener {
@@ -60,22 +61,19 @@ public class StoryListActivity extends AppCompatActivity
         TabLayout tabLayout = findViewById(R.id.tablayout_story_type);
         AppBarLayout appbarLayout = findViewById(R.id.appbar_story_list);
 
-        mModel = ViewModelProviders.of(this).get(StoryListViewModel.class);
-        // Create the observer for stories which updates the UI
-        final Observer<List<StoryList>> storiesObserver = new Observer<List<StoryList>>() {
-            @Override
-            public void onChanged(@Nullable final List<StoryList> storyLists) {
-                Log.d(TAG, "onChanged: stories");
-                mPagerAdapter.notifyDataSetChanged();
-            }
-        };
-        // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer
-        mModel.getAllStoryLists().observe(this, storiesObserver);
-
         mViewPager = findViewById(R.id.viewpager_story_list);
         mPagerAdapter = new StoryTypeTabsAdapter(getSupportFragmentManager(), this);
         mViewPager.setAdapter(mPagerAdapter);
         tabLayout.setupWithViewPager(mViewPager);
+
+        mModel = ViewModelProviders.of(this, new StoryListViewModelFactory(this.getApplication(), "any")).get(StoryListViewModel.class);
+        // Create the observer for stories which updates the UI
+        final Observer<List<StoryList>> storiesObserver = storyLists -> {
+            Log.d(TAG, "*** onChanged: stories, updating pager adapter");
+            mPagerAdapter.notifyDataSetChanged();
+        };
+        // Observe the LiveData, on change update pager adapter
+        mModel.getAllStoryLists().observe(this, storiesObserver);
     }
 
     @Override

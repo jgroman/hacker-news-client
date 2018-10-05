@@ -62,21 +62,11 @@ public class DataRepository {
 
         mObservableStoryLists = new MediatorLiveData<>();
         mObservableStoryLists.addSource(mStoryListDao.getAllStoryLists(),
-                new Observer<List<StoryList>>() {
-                    @Override
-                    public void onChanged(@Nullable List<StoryList> storyLists) {
-                        mObservableStoryLists.postValue(storyLists);
-                    }
-                });
+                storyLists -> mObservableStoryLists.postValue(storyLists));
 
         mObservableItems = new MediatorLiveData<>();
         mObservableItems.addSource(mItemDao.getAllItems(),
-                new Observer<List<Item>>() {
-                    @Override
-                    public void onChanged(@Nullable List<Item> value) {
-                        mObservableItems.postValue(value);
-                    }
-                });
+                value -> mObservableItems.postValue(value));
 
         // Start loading story lists
         new LoadStoryListsTask(mApplication, mStoryListDao).execute();
@@ -98,20 +88,28 @@ public class DataRepository {
      * @return
      */
     public LiveData<List<StoryList>> getAllStoryLists() {
+        Log.d(TAG, "*** getAllStoryLists: ");
         return mObservableStoryLists;
     }
 
+
     /**
+     * Gets list of all story ids belonging to specific story type
      *
+     * @param storyLists
      * @param storyType
      * @return
      */
-    public StoryList getStoryList(String storyType) {
-        List<StoryList> storyLists = mObservableStoryLists.getValue();
+    public LiveData<ArrayList<Long>> getTypedStoryList(List<StoryList> storyLists, String storyType) {
+        Log.d(TAG, "*** getTypedStoryList: " + storyType);
         if (storyLists == null) return null;
 
         for(StoryList storyList : storyLists) {
-            if (storyList.getType().equals(storyType)) return storyList;
+            if (storyList.getType().equals(storyType)) {
+                MediatorLiveData<ArrayList<Long>> sl = new MediatorLiveData<>();
+                sl.setValue(storyList.getStories());
+                return sl;
+            }
         }
 
         return null;
@@ -143,6 +141,7 @@ public class DataRepository {
             for (String storyType : storyTypes) {
 
                 // Load story list JSON
+                Log.d(TAG, "*** doInBackground: loading story list from API: " + storyType);
                 URL storiesUrl = HackerNewsApi.buildStoriesUrl(storyType);
 
                 try {
@@ -158,6 +157,7 @@ public class DataRepository {
                             HackerNewsApi.getStoriesFromJson(jsonStoryList);
 
                     resultStoryList = new StoryList(storyType, storyListResult.getResult());
+                    Log.d(TAG, "*** doInBackground: loaded items: " + resultStoryList.getStories().size());
 
                 } catch (IOException iex) {
                     Log.e(TAG, String.format("IOException when fetching API story data: %s", iex.getMessage()));
@@ -173,15 +173,28 @@ public class DataRepository {
 
 
     public LiveData<List<Item>> getAllItems() {
+        Log.d(TAG, "*** getAllItems: ");
         return mObservableItems;
     }
 
     public Item getItem(long itemId) {
-        Item item = mItemDao.getItem(itemId);
-        if (item == null) {
-            new LoadItemTask(mApplication, mItemDao).execute(itemId);
+        Log.d(TAG, "getItem: " + itemId);
+        List<Item> itemList = mObservableItems.getValue();
+
+        if (itemList != null) {
+            for (Item item : itemList) {
+                if (item.getId() == itemId) {
+                    Log.d(TAG, "getItem: found in cache");
+                    return item;
+                }
+            }
         }
-        return item;
+
+        // Item is not cached yet, start loading from API
+        // LiveData will propagate item data to cache automagically
+        Log.d(TAG, "getItem: asynctasking");
+        new LoadItemTask(mApplication, mItemDao).execute(itemId);
+        return null;
     }
 
     private static class LoadItemTask extends AsyncTask<Long, Void, Void> {
@@ -201,14 +214,13 @@ public class DataRepository {
 
             long itemId = longs[0];
 
-            Log.d(TAG, "doInBackground: loading item " + itemId);
+            Log.d(TAG, "*** doInBackground: loading item " + itemId);
 
             try {
                 if (USE_MOCK_DATA) {
                     // Mock request used for debugging to avoid sending network queries
                     jsonItem = MockDataUtils.getMockItemJson(app.getResources(), app.getPackageName(), itemId);
-                }
-                else {
+                } else {
                     URL itemUrl = HackerNewsApi.buildItemUrl(itemId);
                     jsonItem = NetworkUtils.getResponseFromHttpUrl(itemUrl);
                 }
@@ -217,8 +229,7 @@ public class DataRepository {
                         HackerNewsApi.getItemFromJson(jsonItem);
 
                 resultItem = itemResult.getResult();
-            }
-            catch (IOException iex) {
+            } catch (IOException iex) {
                 Log.e(TAG, String.format("IOException when fetching API item data: %s", iex.getMessage()));
                 resultItem = new Item();
                 resultItem.setId(itemId);
