@@ -105,11 +105,13 @@ public class CommentListAdapter extends ListAdapter<Long, CommentListAdapter.Com
         Item item = mItemModel.getItem(getItem(position));
 
         // Clean comment text
-        String commentText = item.getText();
-        if (commentText != null && commentText.length() > 0) {
-            Spanned htmlResult = Html.fromHtml(commentText, Html.FROM_HTML_MODE_LEGACY);
-            if (htmlResult != null) {
-                item.setText(htmlResult.toString());
+        if (item != null) {
+            String commentText = item.getText();
+            if (commentText != null && commentText.length() > 0) {
+                Spanned htmlResult = Html.fromHtml(commentText, Html.FROM_HTML_MODE_LEGACY);
+                if (htmlResult != null) {
+                    item.setText(htmlResult.toString());
+                }
             }
         }
 
