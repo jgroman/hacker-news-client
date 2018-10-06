@@ -25,23 +25,26 @@ public class StoryListViewModel extends AndroidViewModel {
 
     private final LiveData<ArrayList<Long>> mObservableTypedStoryList;
 
+    public StoryListViewModel(Application application) {
+        this(application, "any");
+    }
+
     public StoryListViewModel(Application application, String storyType) {
         super(application);
+
+        // Get repository singleton instance
+        mRepository = ((HackerNewsClientApplication) application).getRepository();
 
         mObservableStoryLists = new MediatorLiveData<>();
         // By default set to null until we get data from the database
         mObservableStoryLists.setValue(null);
 
-        mRepository = ((HackerNewsClientApplication) application).getRepository();
-
+        // Observe changes of the story lists from the database and forward them to observers
         LiveData<List<StoryList>> storyLists = mRepository.getAllStoryLists();
-
-        // Observe the changes of the story lists from the database and forward them
         mObservableStoryLists.addSource(storyLists, mObservableStoryLists::setValue);
 
         mObservableTypedStoryList = Transformations.switchMap(mObservableStoryLists,
                 (List<StoryList> stories) -> mRepository.getTypedStoryList(stories, storyType));
-
     }
 
     /**

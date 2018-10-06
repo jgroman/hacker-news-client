@@ -55,8 +55,6 @@ public class StoryListFragment extends Fragment
 
     private Context mContext;
     private String mStoryType;
-    private LiveData<List<StoryList>> mStories;
-    private long[] mStoryList;
     private RecyclerView mStoryListRecyclerView;
     private LinearLayoutManager mLayoutManager;
 
@@ -74,7 +72,6 @@ public class StoryListFragment extends Fragment
     OnStoryClickListener mStoryClickListenerCallback;
 
     public static Fragment newInstance(@NonNull String storyType) {
-        //Log.d(TAG, "*** StoryListFragment newInstance " + storyType);
         Bundle arguments = new Bundle();
         arguments.putString(BUNDLE_STORY_TYPE, storyType);
         StoryListFragment fragment = new StoryListFragment();
@@ -132,7 +129,6 @@ public class StoryListFragment extends Fragment
                 .get(StoryListViewModel.class);
 
         mItemModel = ViewModelProviders.of(mActivity).get(ItemViewModel.class);
-
 
         mStoryListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_story_list,
                 container, false);

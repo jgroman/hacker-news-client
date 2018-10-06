@@ -43,7 +43,7 @@ public class Item extends BaseObservable implements Parcelable {
     public static final String TABLE_NAME = "items";
 
     // JSON field string ids, also Room column names
-    public static final String ID = "id";
+    static final String ID = "id";
     public static final String DELETED = "deleted";
     public static final String TYPE = "type";
     public static final String BY = "by";
@@ -118,6 +118,7 @@ public class Item extends BaseObservable implements Parcelable {
         notifyPropertyChanged(BR.deleted);
     }
 
+    @NonNull
     @Bindable
     public String getType() { return type; }
     public void setType(String type) {
@@ -206,7 +207,7 @@ public class Item extends BaseObservable implements Parcelable {
     public Item() {
         this.id = 0;
         this.deleted = false;
-        this.type = null;
+        this.type = "";
         this.by = null;
         this.text = null;
         this.dead = false;

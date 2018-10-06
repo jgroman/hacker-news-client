@@ -20,18 +20,23 @@ import android.app.Activity;
 import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
+import android.support.v7.recyclerview.extensions.ListAdapter;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.Spanned;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import cz.jtek.hackernewsclient.R;
-import cz.jtek.hackernewsclient.databinding.ItemStoryBinding;
+import cz.jtek.hackernewsclient.databinding.ItemCommentBinding;
 import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.model.ItemViewModel;
 
-public class CommentListAdapter extends RecyclerView.Adapter<CommentListAdapter.CommentViewHolder> {
+public class CommentListAdapter extends ListAdapter<Long, CommentListAdapter.CommentViewHolder> {
 
     @SuppressWarnings("unused")
     private static final String TAG = CommentListAdapter.class.getSimpleName();
@@ -42,21 +47,19 @@ public class CommentListAdapter extends RecyclerView.Adapter<CommentListAdapter.
 
     private final CommentListOnClickListener mClickListener;
 
-    private ItemViewModel mModel;
-    private long[] mCommentList;
+    private ItemViewModel mItemModel;
 
-    CommentListAdapter(Activity activity, long storyId, CommentListOnClickListener clickListener) {
-        mModel = ViewModelProviders.of((CommentListActivity) activity).get(ItemViewModel.class);
-        // At his point an item is fully loaded in ViewModel, its kids are available
-        Log.d(TAG, "CommentListAdapter: getting kids from " + storyId);
-        //mCommentList = mModel.getItem(storyId, false).getKids();
+    CommentListAdapter(Activity activity, CommentListOnClickListener clickListener) {
+        super(DIFF_CALLBACK);
+
+        mItemModel = ViewModelProviders.of((CommentListActivity) activity).get(ItemViewModel.class);
         mClickListener = clickListener;
     }
 
-
     public class CommentViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
-        private ItemStoryBinding binding;
+        // Binding class name is generated from layout filename: item_comment.xml
+        private ItemCommentBinding binding;
 
         /**
          * View holder constructor
@@ -71,7 +74,8 @@ public class CommentListAdapter extends RecyclerView.Adapter<CommentListAdapter.
         }
 
         void bind(Item item) {
-            binding.setItem(item);
+            // Method name is derived from binding variable name
+            binding.setComment(item);
         }
 
         /**
@@ -82,7 +86,7 @@ public class CommentListAdapter extends RecyclerView.Adapter<CommentListAdapter.
         @Override
         public void onClick(View view) {
             int itemPos = getAdapterPosition();
-            long itemId = mCommentList[itemPos];
+            long itemId = getItem(itemPos);
             mClickListener.onClick(itemId);
         }
     }
@@ -91,19 +95,40 @@ public class CommentListAdapter extends RecyclerView.Adapter<CommentListAdapter.
     @Override
     public CommentViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        View view = inflater.inflate(R.layout.item_story, parent, false);
+        View view = inflater.inflate(R.layout.item_comment, parent, false);
         return new CommentViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
-        Item item = mModel.getItem(mCommentList[position]);
+        Log.d(TAG, "*** onBindViewHolder: binding " + position + " to " + getItem(position));
+        Item item = mItemModel.getItem(getItem(position));
+
+        // Clean comment text
+        String commentText = item.getText();
+        if (commentText != null && commentText.length() > 0) {
+            Spanned htmlResult = Html.fromHtml(commentText, Html.FROM_HTML_MODE_LEGACY);
+            if (htmlResult != null) {
+                item.setText(htmlResult.toString());
+            }
+        }
+
         holder.bind(item);
     }
 
-    @Override
-    public int getItemCount() {
-        if (mCommentList == null) { return 0; }
-        return mCommentList.length;
-    }
+    private static final DiffUtil.ItemCallback<Long> DIFF_CALLBACK =
+            new DiffUtil.ItemCallback<Long>() {
+                @Override
+                public boolean areItemsTheSame(@NonNull Long oldItem, @NonNull Long newItem) {
+                    // Item properties may have changed if reloaded from the DB, but ID is fixed
+                    return oldItem.equals(newItem);
+                }
+                @Override
+                public boolean areContentsTheSame(@NonNull Long oldItem, @NonNull Long newItem) {
+                    // NOTE: if you use equals, your object must properly override Object#equals()
+                    // Incorrectly returning false here will result in too many animations.
+                    return oldItem.equals(newItem);
+                }
+            };
+
 }

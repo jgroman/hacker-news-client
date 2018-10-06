@@ -22,7 +22,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -51,7 +50,7 @@ public class StoryListActivity extends AppCompatActivity
     private ViewPager mViewPager;
     public StoryTypeTabsAdapter mPagerAdapter;
 
-    public StoryListViewModel mModel;
+    public StoryListViewModel mStoryListModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,14 +65,15 @@ public class StoryListActivity extends AppCompatActivity
         mViewPager.setAdapter(mPagerAdapter);
         tabLayout.setupWithViewPager(mViewPager);
 
-        mModel = ViewModelProviders.of(this, new StoryListViewModelFactory(this.getApplication(), "any")).get(StoryListViewModel.class);
+        mStoryListModel = ViewModelProviders.of(this).get(StoryListViewModel.class);
+
         // Create the observer for stories which updates the UI
         final Observer<List<StoryList>> storiesObserver = storyLists -> {
             Log.d(TAG, "*** onChanged: stories, updating pager adapter");
             mPagerAdapter.notifyDataSetChanged();
         };
         // Observe the LiveData, on change update pager adapter
-        mModel.getAllStoryLists().observe(this, storiesObserver);
+        mStoryListModel.getAllStoryLists().observe(this, storiesObserver);
     }
 
     @Override

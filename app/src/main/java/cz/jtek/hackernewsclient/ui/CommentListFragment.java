@@ -23,18 +23,20 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.util.LongSparseArray;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.model.ItemViewModel;
+import cz.jtek.hackernewsclient.model.ItemViewModelFactory;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
 public class CommentListFragment extends Fragment
@@ -50,10 +52,11 @@ public class CommentListFragment extends Fragment
     private static final String KEY_STORY_ID = BUNDLE_STORY_ID;
 
     private CommentListActivity mActivity;
-    private ItemViewModel mModel;
-    private long mStoryId;
+    private long mParentStoryId;
     private RecyclerView mCommentListRecyclerView;
     private CommentListAdapter mCommentListAdapter;
+
+    private ItemViewModel mItemModel;
 
 
     // Custom OnCommentClickListener interface, must be implemented by container activity
@@ -61,10 +64,10 @@ public class CommentListFragment extends Fragment
         void onCommentSelected(long itemId);
     }
 
-    // This is a callback to onCommentSelected in container activity
+    // Callback to onCommentSelected in container activity
     OnCommentClickListener mCommentClickListenerCallback;
 
-    public static CommentListFragment newInstance(@NonNull long storyId) {
+    public static CommentListFragment newInstance(long storyId) {
         Bundle arguments = new Bundle();
         arguments.putLong(BUNDLE_STORY_ID, storyId);
         CommentListFragment fragment = new CommentListFragment();
@@ -91,9 +94,6 @@ public class CommentListFragment extends Fragment
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mActivity = (CommentListActivity) getActivity();
-        if (null == mActivity) { return; }
-
-        mModel = ViewModelProviders.of(getActivity()).get(ItemViewModel.class);
     }
 
     @Nullable
@@ -101,43 +101,56 @@ public class CommentListFragment extends Fragment
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
+        if (null == mActivity) { return null; }
+
         Context context = mActivity.getApplicationContext();
 
         if (savedInstanceState != null) {
-            // Restoring story id from saved instance state
-            mStoryId = savedInstanceState.getLong(KEY_STORY_ID);
+            // Restoring parent story id from saved instance state
+            mParentStoryId = savedInstanceState.getLong(KEY_STORY_ID);
         }
         else {
-            // Get story id from passed arguments
+            // Get parent story id from passed arguments
             Bundle args = getArguments();
             if (args != null) {
                 if (args.containsKey(BUNDLE_STORY_ID)) {
-                    mStoryId = args.getLong(BUNDLE_STORY_ID);
+                    mParentStoryId = args.getLong(BUNDLE_STORY_ID);
                 }
             }
         }
 
+        mItemModel = ViewModelProviders.of(this,
+                new ItemViewModelFactory(mActivity.getApplication(), mParentStoryId))
+                .get(ItemViewModel.class);
+
         mCommentListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_comment_list,
                 container, false);
-
-        mCommentListAdapter = new CommentListAdapter(mActivity, mStoryId, this);
-        mCommentListRecyclerView.setAdapter(mCommentListAdapter);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         mCommentListRecyclerView.setLayoutManager(layoutManager);
         mCommentListRecyclerView.setHasFixedSize(true);
 
-        // Observer for comment items
-        final Observer<List<Item>> commentsObserver = new Observer<List<Item>>() {
-            @Override
-            public void onChanged(@Nullable List<Item> itemList) {
-                // On comment changes update adapter contents
-                mCommentListAdapter.notifyDataSetChanged();
-            }
-        };
+        mCommentListAdapter = new CommentListAdapter(mActivity, this);
 
-        // Start observing comment LiveData
-        mModel.getAllItems().observe(this, commentsObserver);
+        // Observer for kid (comment) list
+        final Observer<ArrayList<Long>> kidListObserver = kidList -> {
+            // On kid list changes update adapter contents
+            // ListAdapter handles source list diffing by itself
+            mCommentListAdapter.submitList(kidList);
+        };
+        // Start observing kid list LiveData
+        mItemModel.getItemKidsList().observe(this, kidListObserver);
+
+        // Create the observer for comment items which updates the recycler view
+        final Observer<List<Item>> commentsObserver = comment -> {
+            Log.d(TAG, "*** adapter item livedata updated ");
+            // Content of some comment changed, repaint recycler view
+            mCommentListAdapter.notifyDataSetChanged();
+        };
+        // Observe comment LiveData
+        mItemModel.getAllCommentItems().observe(this, commentsObserver);
+
+        mCommentListRecyclerView.setAdapter(mCommentListAdapter);
 
         return mCommentListRecyclerView;
     }
@@ -145,7 +158,7 @@ public class CommentListFragment extends Fragment
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         // Store commented story item id
-        outState.putLong(KEY_STORY_ID, mStoryId);
+        outState.putLong(KEY_STORY_ID, mParentStoryId);
 
         super.onSaveInstanceState(outState);
     }

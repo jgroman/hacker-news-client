@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Jaroslav Groman
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package cz.jtek.hackernewsclient.ui;
 
 import android.app.Activity;
@@ -11,8 +27,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-
-import java.util.ArrayList;
 
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.data.Item;
@@ -32,12 +46,9 @@ public class StoryListAdapter extends ListAdapter<Long, StoryListAdapter.StoryVi
 
     private ItemViewModel mItemModel;
 
-
-
     protected StoryListAdapter(Activity activity, StoryListOnClickListener clickListener) {
         super(DIFF_CALLBACK);
 
-        Log.d(TAG, "StoryListAdapter: construct");
         mItemModel = ViewModelProviders.of((StoryListActivity) activity).get(ItemViewModel.class);
         mClickListener = clickListener;
     }
@@ -60,6 +71,7 @@ public class StoryListAdapter extends ListAdapter<Long, StoryListAdapter.StoryVi
         }
 
         void bind(Item item) {
+            // Method name is derived from binding variable name
             binding.setItem(item);
         }
 
@@ -90,7 +102,7 @@ public class StoryListAdapter extends ListAdapter<Long, StoryListAdapter.StoryVi
         holder.bind(mItemModel.getItem(getItem(position)));
     }
 
-    public static final DiffUtil.ItemCallback<Long> DIFF_CALLBACK =
+    private static final DiffUtil.ItemCallback<Long> DIFF_CALLBACK =
             new DiffUtil.ItemCallback<Long>() {
                 @Override
                 public boolean areItemsTheSame(@NonNull Long oldItem, @NonNull Long newItem) {

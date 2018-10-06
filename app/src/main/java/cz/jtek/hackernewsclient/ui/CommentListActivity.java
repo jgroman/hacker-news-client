@@ -41,7 +41,7 @@ public class CommentListActivity extends AppCompatActivity
     private CollapsingToolbarLayout mToolbarLayout;
     private Toolbar mToolbar;
 
-    public StoryListViewModel mModel;
+    public StoryListViewModel mStoryListModel;
     private long mStoryId;
 
 
@@ -70,7 +70,7 @@ public class CommentListActivity extends AppCompatActivity
             mStoryId = savedInstanceState.getLong(EXTRA_STORY_ID);
         }
 
-        mModel = ViewModelProviders.of(this,
+        mStoryListModel = ViewModelProviders.of(this,
                 new StoryListViewModelFactory(this.getApplication(), "any"))
                 .get(StoryListViewModel.class);
 
@@ -79,12 +79,7 @@ public class CommentListActivity extends AppCompatActivity
 
         // Back navigation
         mToolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
-        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
+        mToolbar.setNavigationOnClickListener(v -> finish());
 
         mToolbar.setTitle("blah");
 

@@ -38,12 +38,27 @@
         >
 
         <TextView
+            android:id="@+id/tv_comment_author"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{comment.by}"
+            tools:text="Comment author"
+            />
+
+        <TextView
             android:id="@+id/tv_comment_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textStyle="bold"
+            android:layout_below="@id/tv_comment_author"
             android:text="@{comment.text}"
-            tools:text="Story title"
+            tools:text="Comment text"
+            />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#C0C0C0"
+            android:layout_below="@id/tv_comment_text"
             />
 
     </RelativeLayout>

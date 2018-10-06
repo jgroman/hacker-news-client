@@ -53,6 +53,7 @@ public class DataRepository {
 
     private ItemDao mItemDao;
     private MediatorLiveData<List<Item>> mObservableItems;
+    private MediatorLiveData<List<Item>> mObservableCommentItems;
 
     private DataRepository(Application application, AppDatabase db) {
         mApplication = application;
@@ -67,6 +68,10 @@ public class DataRepository {
         mObservableItems = new MediatorLiveData<>();
         mObservableItems.addSource(mItemDao.getAllItems(),
                 value -> mObservableItems.postValue(value));
+
+        mObservableCommentItems = new MediatorLiveData<>();
+        mObservableCommentItems.addSource(mItemDao.getAllCommentItems(),
+                allComments -> mObservableCommentItems.postValue(allComments));
 
         // Start loading story lists
         new LoadStoryListsTask(mApplication, mStoryListDao).execute();
@@ -111,7 +116,6 @@ public class DataRepository {
                 return sl;
             }
         }
-
         return null;
     }
 
@@ -177,6 +181,11 @@ public class DataRepository {
         return mObservableItems;
     }
 
+    public LiveData<List<Item>> getAllCommentItems() {
+        Log.d(TAG, "*** getAllCommentItems: ");
+        return mObservableCommentItems;
+    }
+
     public Item getItem(long itemId) {
         Log.d(TAG, "getItem: " + itemId);
         List<Item> itemList = mObservableItems.getValue();
@@ -194,6 +203,19 @@ public class DataRepository {
         // LiveData will propagate item data to cache automagically
         Log.d(TAG, "getItem: asynctasking");
         new LoadItemTask(mApplication, mItemDao).execute(itemId);
+        return null;
+    }
+
+    public LiveData<ArrayList<Long>> getItemKidsList(List<Item> itemList, long itemId) {
+        if (itemList == null) return null;
+
+        for(Item item : itemList) {
+            if (item.getId() == itemId) {
+                MediatorLiveData<ArrayList<Long>> result = new MediatorLiveData<>();
+                result.setValue(item.getKids());
+                return result;
+            }
+        }
         return null;
     }
 
@@ -234,6 +256,8 @@ public class DataRepository {
                 resultItem = new Item();
                 resultItem.setId(itemId);
                 resultItem.setTitle("Loading failed...");
+                resultItem.setText("Loading failed...");
+                resultItem.setType("comment");
             }
 
             mItemDao.insert(resultItem);

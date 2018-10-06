@@ -36,6 +36,9 @@ public interface ItemDao {
     @Query("SELECT * FROM " + Item.TABLE_NAME)
     LiveData<List<Item>> getAllItems();
 
+    @Query("SELECT * FROM " + Item.TABLE_NAME + " WHERE " + Item.TYPE + " = 'comment'")
+    LiveData<List<Item>> getAllCommentItems();
+
     @Query("SELECT * FROM " + Item.TABLE_NAME + " WHERE " + Item.ID + " = :itemId")
     Item getItem(long itemId);
 
