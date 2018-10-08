@@ -26,6 +26,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 
 import cz.jtek.hackernewsclient.R;
+import cz.jtek.hackernewsclient.data.Item;
+import cz.jtek.hackernewsclient.model.ItemViewModel;
+import cz.jtek.hackernewsclient.model.ItemViewModelFactory;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
 import cz.jtek.hackernewsclient.model.StoryListViewModelFactory;
 
@@ -41,7 +44,8 @@ public class CommentListActivity extends AppCompatActivity
     private CollapsingToolbarLayout mToolbarLayout;
     private Toolbar mToolbar;
 
-    public StoryListViewModel mStoryListModel;
+    private ItemViewModel mItemModel;
+
     private long mStoryId;
 
 
@@ -70,9 +74,11 @@ public class CommentListActivity extends AppCompatActivity
             mStoryId = savedInstanceState.getLong(EXTRA_STORY_ID);
         }
 
-        mStoryListModel = ViewModelProviders.of(this,
-                new StoryListViewModelFactory(this.getApplication(), "any"))
-                .get(StoryListViewModel.class);
+        mItemModel = ViewModelProviders.of(this,
+                new ItemViewModelFactory(getApplication(), mStoryId))
+                .get(ItemViewModel.class);
+
+        Item parentStoryItem = mItemModel.getItem(mStoryId);
 
         mToolbarLayout = findViewById(R.id.ctl_story);
         mToolbar = findViewById(R.id.toolbar_story);
@@ -81,7 +87,7 @@ public class CommentListActivity extends AppCompatActivity
         mToolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
         mToolbar.setNavigationOnClickListener(v -> finish());
 
-        mToolbar.setTitle("blah");
+        mToolbar.setTitle(parentStoryItem.getTitle());
 
         // Create comment list fragment
         CommentListFragment commentListFragment = CommentListFragment.newInstance(mStoryId);

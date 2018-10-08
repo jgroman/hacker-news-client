@@ -40,23 +40,26 @@ public class Item extends BaseObservable implements Parcelable {
     @SuppressWarnings("unused")
     private static final String TAG = Item.class.getSimpleName();
 
+    private static final int DEFAULT_NESTING_LEVEL = 1;
+
     public static final String TABLE_NAME = "items";
 
     // JSON field string ids, also Room column names
     static final String ID = "id";
-    public static final String DELETED = "deleted";
-    public static final String TYPE = "type";
-    public static final String BY = "by";
-    public static final String TEXT = "text";
-    public static final String DEAD = "dead";
-    public static final String PARENT = "parent";
-    public static final String POLL = "poll";
-    public static final String KIDS = "kids";
-    public static final String URL = "url";
-    public static final String SCORE = "score";
-    public static final String TITLE = "title";
-    public static final String PARTS = "parts";
-    public static final String DESCENDANTS = "descendants";
+    static final String DELETED = "deleted";
+    static final String TYPE = "type";
+    static final String BY = "by";
+    static final String TEXT = "text";
+    static final String DEAD = "dead";
+    static final String PARENT = "parent";
+    static final String POLL = "poll";
+    static final String KIDS = "kids";
+    static final String URL = "url";
+    static final String SCORE = "score";
+    static final String TITLE = "title";
+    static final String PARTS = "parts";
+    static final String DESCENDANTS = "descendants";
+    static final String NEST_LEVEL = "nest-level";
 
     // Members
     @PrimaryKey
@@ -102,6 +105,9 @@ public class Item extends BaseObservable implements Parcelable {
 
     @ColumnInfo(name = DESCENDANTS)
     private int descendants;
+
+    @ColumnInfo(name = NEST_LEVEL)
+    private int nestLevel;
 
     // Getters & Setters
     @Bindable
@@ -203,6 +209,13 @@ public class Item extends BaseObservable implements Parcelable {
         notifyPropertyChanged(BR.descendants);
     }
 
+    @Bindable
+    public int getNestLevel() { return nestLevel; }
+    public void setNestLevel(int nestLevel) {
+        this.nestLevel = nestLevel;
+        notifyPropertyChanged(BR.nestLevel);
+    }
+
     // Default constructor
     public Item() {
         this.id = 0;
@@ -219,6 +232,7 @@ public class Item extends BaseObservable implements Parcelable {
         this.title = null;
         this.parts = null;
         this.descendants = 0;
+        this.nestLevel = DEFAULT_NESTING_LEVEL;
     }
 
     // Constructor converting JSON object to instance of this class
@@ -257,6 +271,9 @@ public class Item extends BaseObservable implements Parcelable {
         }
 
         item.setDescendants(jo.optInt(DESCENDANTS));
+
+        // Nesting level is not contained in JSON, it is calculated during comment tree unpacking
+        item.setNestLevel(DEFAULT_NESTING_LEVEL);
 
         return item;
     }
@@ -299,6 +316,7 @@ public class Item extends BaseObservable implements Parcelable {
         parcel.writeString(this.title);
         parcel.writeList(this.parts);
         parcel.writeInt(this.descendants);
+        parcel.writeInt(this.nestLevel);
     }
 
     // Constructor from incoming Parcel
@@ -319,6 +337,7 @@ public class Item extends BaseObservable implements Parcelable {
         if (this.parts == null) { this.parts = new ArrayList<>(); }
         in.readList(this.parts, null);
         this.descendants = in.readInt();
+        this.nestLevel = in.readInt();
     }
 
     // Parcelable creator
@@ -370,6 +389,7 @@ public class Item extends BaseObservable implements Parcelable {
                         return false;
 
                     if (oldItem.getDescendants() != newItem.getDescendants()) return false;
+                    //if (oldItem.getNestLevel() != newItem.getNestLevel()) return true;
 
                     return true;
                 }

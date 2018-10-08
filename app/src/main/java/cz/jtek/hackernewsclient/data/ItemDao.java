@@ -21,17 +21,12 @@ import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Insert;
 import android.arch.persistence.room.OnConflictStrategy;
 import android.arch.persistence.room.Query;
+import android.arch.persistence.room.Update;
 
 import java.util.List;
 
 @Dao
 public interface ItemDao {
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(Item item);
-
-    @Query("DELETE FROM " + Item.TABLE_NAME)
-    void deleteAll();
 
     @Query("SELECT * FROM " + Item.TABLE_NAME)
     LiveData<List<Item>> getAllItems();
@@ -41,5 +36,14 @@ public interface ItemDao {
 
     @Query("SELECT * FROM " + Item.TABLE_NAME + " WHERE " + Item.ID + " = :itemId")
     Item getItem(long itemId);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insert(Item item);
+
+    @Update
+    void updateItems(Item... items);
+
+    @Query("DELETE FROM " + Item.TABLE_NAME)
+    void deleteAll();
 
 }

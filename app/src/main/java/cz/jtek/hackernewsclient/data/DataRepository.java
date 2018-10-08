@@ -186,38 +186,94 @@ public class DataRepository {
         return mObservableCommentItems;
     }
 
+    private Item findItemById(List<Item> itemList, long itemId) {
+        if (itemList == null) return null;
+        for(Item item : itemList) {
+            if (item.getId() == itemId) {
+                return item;
+            }
+        }
+        return null;
+    }
+
     public Item getItem(long itemId) {
-        Log.d(TAG, "getItem: " + itemId);
         List<Item> itemList = mObservableItems.getValue();
 
-        if (itemList != null) {
-            for (Item item : itemList) {
-                if (item.getId() == itemId) {
-                    Log.d(TAG, "getItem: found in cache");
-                    return item;
-                }
-            }
+        Item item = findItemById(itemList, itemId);
+        if (item != null) {
+            Log.d(TAG, "getItem: " + itemId + " found in cache");
+            return item;
         }
 
         // Item is not cached yet, start loading from API
         // LiveData will propagate item data to cache automagically
-        Log.d(TAG, "getItem: asynctasking");
+        Log.d(TAG, "getItem: " + itemId + " asynctask loading");
         new LoadItemTask(mApplication, mItemDao).execute(itemId);
         return null;
     }
 
+    private void updateKidNestLevel(List<Item> itemList, ArrayList<Long> kidList, int nestLevel) {
+        if (itemList == null) return;
+
+        if (kidList != null && kidList.size() > 0) {
+            for (long kidId : kidList) {
+                Item kidItem = findItemById(itemList, kidId);
+                if (kidItem != null) {
+                    kidItem.setNestLevel(nestLevel);
+                    //Log.d(TAG, "updateKidNestLevel: " + kidId + ", level " + nestLevel);
+                    new UpdateItemsTask(mApplication, mItemDao).execute(kidItem);
+                }
+            }
+        }
+    }
+
+    /**
+     * Get list of item kids (comments)
+     *
+     * @param itemList
+     * @param itemId
+     * @return
+     */
     public LiveData<ArrayList<Long>> getItemKidsList(List<Item> itemList, long itemId) {
         if (itemList == null) return null;
 
-        for(Item item : itemList) {
-            if (item.getId() == itemId) {
-                MediatorLiveData<ArrayList<Long>> result = new MediatorLiveData<>();
-                result.setValue(item.getKids());
-                return result;
+        Item parentItem, workItem;
+        ArrayList<Long> resultKidList, workKidList;
+        int currentNestingLevel;
+
+        resultKidList = new ArrayList<>();
+
+        Log.d(TAG, "getItemKidsList: getting kids from " + itemId);
+        parentItem = findItemById(itemList, itemId);
+        if (parentItem != null) {
+            resultKidList = parentItem.getKids();
+            if (resultKidList != null && resultKidList.size() > 0) {
+                // All items are set to nest level 1 by default when loading
+
+                int currentKidIndex = 0;
+                // Traversing comment tree, using cached items only
+                do {
+                    //Log.d(TAG, "getItemKidsList: processing kid list position " + currentKidIndex);
+                    workItem = findItemById(itemList, resultKidList.get(currentKidIndex));
+                    if (workItem != null) {
+                        currentNestingLevel = workItem.getNestLevel();
+                        //Log.d(TAG, "getItemKidsList: adding kids from " + workItem.getId() + " at level " + currentNestingLevel);
+                        workKidList = workItem.getKids();
+                        if (workKidList != null && workKidList.size() > 0) {
+                            //updateKidNestLevel(itemList, workKidList, currentNestingLevel + 1);
+                            resultKidList.addAll(currentKidIndex + 1, workKidList);
+                        }
+                    }
+                    currentKidIndex++;
+                } while (currentKidIndex < resultKidList.size());
             }
         }
-        return null;
+
+        MediatorLiveData<ArrayList<Long>> result = new MediatorLiveData<>();
+        result.setValue(resultKidList);
+        return result;
     }
+
 
     private static class LoadItemTask extends AsyncTask<Long, Void, Void> {
 
@@ -235,8 +291,6 @@ public class DataRepository {
             String jsonItem;
 
             long itemId = longs[0];
-
-            Log.d(TAG, "*** doInBackground: loading item " + itemId);
 
             try {
                 if (USE_MOCK_DATA) {
@@ -261,6 +315,22 @@ public class DataRepository {
             }
 
             mItemDao.insert(resultItem);
+            return null;
+        }
+    }
+
+    private static class UpdateItemsTask extends AsyncTask<Item, Void, Void> {
+        private Application mApp;
+        private ItemDao mItemDao;
+
+        UpdateItemsTask(Application application, ItemDao itemDao) {
+            mApp = application;
+            mItemDao = itemDao;
+        }
+
+        @Override
+        protected Void doInBackground(Item... items) {
+            mItemDao.updateItems(items);
             return null;
         }
     }

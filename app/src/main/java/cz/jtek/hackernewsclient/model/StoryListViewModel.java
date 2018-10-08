@@ -25,6 +25,7 @@ public class StoryListViewModel extends AndroidViewModel {
 
     private final LiveData<ArrayList<Long>> mObservableTypedStoryList;
 
+    // This simplified constructor is used by StoryListActivity and CommentListActivity
     public StoryListViewModel(Application application) {
         this(application, "any");
     }

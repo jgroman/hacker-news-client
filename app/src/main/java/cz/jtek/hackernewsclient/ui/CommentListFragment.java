@@ -134,6 +134,7 @@ public class CommentListFragment extends Fragment
 
         // Observer for kid (comment) list
         final Observer<ArrayList<Long>> kidListObserver = kidList -> {
+            Log.d(TAG, "*** adapter kid list livedata updated ");
             // On kid list changes update adapter contents
             // ListAdapter handles source list diffing by itself
             mCommentListAdapter.submitList(kidList);
@@ -170,7 +171,7 @@ public class CommentListFragment extends Fragment
      */
     @Override
     public void onClick(long itemId) {
-        // OnClick event is passed to activity
+        // OnClick event is passed up to activity
         mCommentClickListenerCallback.onCommentSelected(itemId);
     }
 }
