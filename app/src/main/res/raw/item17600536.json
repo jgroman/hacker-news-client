@@ -1,0 +1,1 @@
+{"by":"bogomipz","id":17600536,"parent":17592746,"text":"So is the main difference between FIDO U2F and regular TOTP simply the addition of the HMAC-SHA256 of the domain on the server side?<p>Is there a requirement that FIDO be implemented on a hardware device?","time":1532436876,"type":"comment"}
