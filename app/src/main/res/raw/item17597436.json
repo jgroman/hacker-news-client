@@ -1,0 +1,1 @@
+{"by":"justincormack","id":17597436,"kids":[17598126],"parent":17593780,"text":"If you can reset the nonce without resetting the key you can probably retrieve the key easily if you can read the traffic. The service should not need to check the nonce, and adding that much state is going to be complicated.","time":1532395517,"type":"comment"}

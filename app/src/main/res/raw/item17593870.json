@@ -1,0 +1,1 @@
+{"by":"tptacek","id":17593870,"kids":[17597400,17594751,17597671,17597837],"parent":17593704,"text":"It&#x27;s not at all obvious to me, because 1Password passwords are stored in the exact same places that 1Password-managed TOTP codes are. You might as well just concatenate the TOTP secret to your password.","time":1532363961,"type":"comment"}

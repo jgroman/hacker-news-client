@@ -1,0 +1,1 @@
+{"by":"fencepost","id":17594385,"parent":17593345,"text":"You could also use two separate systems for password and TOTP storage - one gets passwords, one gets TOTP, and the one with passwords explicitly does NOT get the password for your TOTP storage.","time":1532368023,"type":"comment"}
