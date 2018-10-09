@@ -227,6 +227,21 @@ public class DataRepository {
         }
     }
 
+    public int getItemNestLevel(List<Item> itemList, long itemId) {
+        if (itemList == null) return -1;
+
+        Item item = findItemById(itemList, itemId);
+        if (item != null) {
+            if (item.getParent() == 0) {
+                return 1;
+            }
+            else {
+                return getItemNestLevel(itemList, item.getParent()) + 1;
+            }
+        }
+        return -1;
+    }
+
     /**
      * Get list of item kids (comments)
      *
@@ -241,9 +256,10 @@ public class DataRepository {
         ArrayList<Long> resultKidList, workKidList;
         int currentNestingLevel;
 
+        Log.d(TAG, "*** getItemKidsList: Adding kids for parent " + itemId);
+
         resultKidList = new ArrayList<>();
 
-        Log.d(TAG, "getItemKidsList: getting kids from " + itemId);
         parentItem = findItemById(itemList, itemId);
         if (parentItem != null) {
             resultKidList = parentItem.getKids();
@@ -251,6 +267,7 @@ public class DataRepository {
                 // All items are set to nest level 1 by default when loading
 
                 int currentKidIndex = 0;
+                int totalKidsAdded = 0;
                 // Traversing comment tree, using cached items only
                 do {
                     //Log.d(TAG, "getItemKidsList: processing kid list position " + currentKidIndex);
@@ -260,12 +277,14 @@ public class DataRepository {
                         //Log.d(TAG, "getItemKidsList: adding kids from " + workItem.getId() + " at level " + currentNestingLevel);
                         workKidList = workItem.getKids();
                         if (workKidList != null && workKidList.size() > 0) {
+                            totalKidsAdded += workKidList.size();
+                            Log.d(TAG, "*** getItemKidsList: Added kids " + workKidList.size()+ " for item " + workItem.getId() + " at level " + getItemNestLevel(itemList, workItem.getId()));
                             //updateKidNestLevel(itemList, workKidList, currentNestingLevel + 1);
                             resultKidList.addAll(currentKidIndex + 1, workKidList);
                         }
                     }
                     currentKidIndex++;
-                } while (currentKidIndex < resultKidList.size());
+                } while (currentKidIndex < resultKidList.size() );
             }
         }
 
@@ -309,8 +328,8 @@ public class DataRepository {
                 Log.e(TAG, String.format("IOException when fetching API item data: %s", iex.getMessage()));
                 resultItem = new Item();
                 resultItem.setId(itemId);
-                resultItem.setTitle("Loading failed...");
-                resultItem.setText("Loading failed...");
+                resultItem.setTitle("Loading " + Long.toString(itemId) + " failed...");
+                resultItem.setText("Loading " + Long.toString(itemId) + " failed...");
                 resultItem.setType("comment");
             }
 
