@@ -152,7 +152,7 @@ public class StoryListFragment extends Fragment
 
         // Create the observer for items which updates the UI
         final Observer<List<Item>> itemsObserver = item -> {
-            Log.d(TAG, "*** adapter item livedata updated ");
+            Log.d(TAG, "*** adapter story items livedata updated ");
             adapter.notifyDataSetChanged();
             //adapter.submitList(itemList);
         };

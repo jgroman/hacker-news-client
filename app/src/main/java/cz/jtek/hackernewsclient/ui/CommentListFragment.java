@@ -134,7 +134,7 @@ public class CommentListFragment extends Fragment
 
         // Observer for kid (comment) list
         final Observer<ArrayList<Long>> kidListObserver = kidList -> {
-            Log.d(TAG, "*** adapter kid list livedata updated ");
+            Log.d(TAG, "*** adapter kid list livedata updated");
             // On kid list changes update adapter contents
             // ListAdapter handles source list diffing by itself
             mCommentListAdapter.submitList(kidList);
@@ -144,7 +144,7 @@ public class CommentListFragment extends Fragment
 
         // Create the observer for comment items which updates the recycler view
         final Observer<List<Item>> commentsObserver = comment -> {
-            Log.d(TAG, "*** adapter item livedata updated ");
+            Log.d(TAG, "*** adapter comment item livedata updated");
             // Content of some comment changed, repaint recycler view
             mCommentListAdapter.notifyDataSetChanged();
         };

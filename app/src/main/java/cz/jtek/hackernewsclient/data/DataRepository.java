@@ -19,11 +19,7 @@ package cz.jtek.hackernewsclient.data;
 import android.app.Application;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
-import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.Observer;
 import android.os.AsyncTask;
-import android.support.annotation.Nullable;
-import android.support.v4.util.LongSparseArray;
 import android.util.Log;
 
 import java.io.IOException;
@@ -53,8 +49,37 @@ public class DataRepository {
 
     private ItemDao mItemDao;
     private MediatorLiveData<List<Item>> mObservableItems;
+    private MediatorLiveData<List<Item>> mObservableStoryItems;
     private MediatorLiveData<List<Item>> mObservableCommentItems;
 
+    private static List<Long> mItemsBeingLoaded;
+
+    private static final Item EMPTY_ITEM = new Item();
+
+    /**
+     * Returns repository singleton instance
+     *
+     * @param app
+     * @param database
+     * @return
+     */
+    public static DataRepository getInstance(Application app, final AppDatabase database) {
+        if (sInstance == null) {
+            synchronized (DataRepository.class) {
+                if (sInstance == null) {
+                    sInstance = new DataRepository(app, database);
+                }
+            }
+        }
+        return sInstance;
+    }
+
+    /**
+     * Constructor
+     *
+     * @param application
+     * @param db
+     */
     private DataRepository(Application application, AppDatabase db) {
         mApplication = application;
         mDatabase = db;
@@ -69,23 +94,21 @@ public class DataRepository {
         mObservableItems.addSource(mItemDao.getAllItems(),
                 value -> mObservableItems.postValue(value));
 
+        mObservableStoryItems = new MediatorLiveData<>();
+        mObservableStoryItems.addSource(mItemDao.getAllStoryItems(),
+                allStories -> mObservableStoryItems.postValue(allStories));
+
         mObservableCommentItems = new MediatorLiveData<>();
         mObservableCommentItems.addSource(mItemDao.getAllCommentItems(),
                 allComments -> mObservableCommentItems.postValue(allComments));
 
+        mItemsBeingLoaded = new ArrayList<>();
+
+        EMPTY_ITEM.setTitle("...");
+        EMPTY_ITEM.setText(".....");
+
         // Start loading story lists
         new LoadStoryListsTask(mApplication, mStoryListDao).execute();
-    }
-
-    public static DataRepository getInstance(Application app, final AppDatabase database) {
-        if (sInstance == null) {
-            synchronized (DataRepository.class) {
-                if (sInstance == null) {
-                    sInstance = new DataRepository(app, database);
-                }
-            }
-        }
-        return sInstance;
     }
 
     /**
@@ -120,7 +143,7 @@ public class DataRepository {
     }
 
     /**
-     *
+     * Async loader for story lists
      */
     private static class LoadStoryListsTask extends AsyncTask<Void, Void, Void> {
 
@@ -181,6 +204,11 @@ public class DataRepository {
         return mObservableItems;
     }
 
+    public LiveData<List<Item>> getAllStoryItems() {
+        Log.d(TAG, "*** getAllStoryItems: ");
+        return mObservableStoryItems;
+    }
+
     public LiveData<List<Item>> getAllCommentItems() {
         Log.d(TAG, "*** getAllCommentItems: ");
         return mObservableCommentItems;
@@ -201,15 +229,25 @@ public class DataRepository {
 
         Item item = findItemById(itemList, itemId);
         if (item != null) {
-            Log.d(TAG, "getItem: " + itemId + " found in cache");
+            // Item is already loaded in db
+            Log.d(TAG, "*** getItem: " + itemId + " found in cache");
+            mItemsBeingLoaded.remove(itemId);
             return item;
         }
 
-        // Item is not cached yet, start loading from API
-        // LiveData will propagate item data to cache automagically
-        Log.d(TAG, "getItem: " + itemId + " asynctask loading");
-        new LoadItemTask(mApplication, mItemDao).execute(itemId);
-        return null;
+        if (!mItemsBeingLoaded.contains(itemId)) {
+            // Item is not cached or being loaded yet, start loading from API
+            // LiveData will propagate item data to cache automagically
+            Log.d(TAG, "*** getItem: asynctask loading " + itemId);
+            mItemsBeingLoaded.add(itemId);
+            new LoadItemTask(mApplication, mItemDao).execute(itemId);
+        }
+        else {
+            Log.d(TAG, "*** getItem: in progress " + itemId);
+        }
+
+        // Return empty item
+        return EMPTY_ITEM;
     }
 
     private void updateKidNestLevel(List<Item> itemList, ArrayList<Long> kidList, int nestLevel) {
@@ -227,6 +265,13 @@ public class DataRepository {
         }
     }
 
+    /**
+     * Calculates item nest level in comment tree
+     *
+     * @param itemList
+     * @param itemId
+     * @return
+     */
     public int getItemNestLevel(List<Item> itemList, long itemId) {
         if (itemList == null) return -1;
 
@@ -284,7 +329,7 @@ public class DataRepository {
                         }
                     }
                     currentKidIndex++;
-                } while (currentKidIndex < resultKidList.size() );
+                } while (currentKidIndex < resultKidList.size() || currentKidIndex < 20);
             }
         }
 

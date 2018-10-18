@@ -24,6 +24,7 @@ public class ItemViewModel extends AndroidViewModel {
     private DataRepository mRepository;
 
     private final MediatorLiveData<List<Item>> mObservableItems;
+    private final MediatorLiveData<List<Item>> mObservableStoryItems;
     private final MediatorLiveData<List<Item>> mObservableCommentItems;
 
     private final LiveData<ArrayList<Long>> mObservableItemKidsList;
@@ -46,6 +47,12 @@ public class ItemViewModel extends AndroidViewModel {
         LiveData<List<Item>> items = mRepository.getAllItems();
         mObservableItems.addSource(items, mObservableItems::setValue);
 
+        // Observe changes of story items in the database and forward them to observers
+        mObservableStoryItems = new MediatorLiveData<>();
+        mObservableStoryItems.setValue(null);
+        LiveData<List<Item>> storyItems = mRepository.getAllStoryItems();
+        mObservableStoryItems.addSource(storyItems, mObservableStoryItems::setValue);
+
         // Observe changes of comment items in the database and forward them to observers
         mObservableCommentItems = new MediatorLiveData<>();
         mObservableCommentItems.setValue(null);
@@ -59,6 +66,10 @@ public class ItemViewModel extends AndroidViewModel {
 
     public LiveData<List<Item>> getAllItems() {
         return mObservableItems;
+    }
+
+    public LiveData<List<Item>> getAllStoryItems() {
+        return mObservableStoryItems;
     }
 
     public LiveData<List<Item>> getAllCommentItems() {
