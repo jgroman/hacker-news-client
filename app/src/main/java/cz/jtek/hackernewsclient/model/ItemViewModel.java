@@ -4,6 +4,7 @@ import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
+import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.Transformations;
 import android.support.annotation.Nullable;
@@ -28,6 +29,9 @@ public class ItemViewModel extends AndroidViewModel {
     private final MediatorLiveData<List<Item>> mObservableCommentItems;
 
     private final LiveData<ArrayList<Long>> mObservableItemKidsList;
+
+    private MutableLiveData<long[]> mListedItemIds;
+    private final LiveData<List<Item>> mObservableListedItems;
 
     public ItemViewModel(Application application) {
         this(application, 0);
@@ -61,7 +65,14 @@ public class ItemViewModel extends AndroidViewModel {
 
         mObservableItemKidsList = Transformations.switchMap(mObservableItems,
                 itemList -> mRepository.getItemKidsList(itemList, itemId));
+
+        mObservableListedItems = Transformations.switchMap(
+                mListedItemIds,
+                itemIds -> mRepository.getItemList(itemIds)
+        );
+
     }
+
 
 
     public LiveData<List<Item>> getAllItems() {
@@ -81,4 +92,15 @@ public class ItemViewModel extends AndroidViewModel {
     public Item getItem(long itemId) {
         return mRepository.getItem(itemId);
     }
+
+    public void setItemList(long[] itemIds) {
+        this.mListedItemIds.setValue(itemIds);
+    }
+
+    public LiveData<List<Item>> getListedItems() {
+        return mObservableListedItems;
+    }
+
+
+
 }

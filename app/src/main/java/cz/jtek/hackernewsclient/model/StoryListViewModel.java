@@ -5,7 +5,6 @@ import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
 import android.arch.lifecycle.Transformations;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +25,8 @@ public class StoryListViewModel extends AndroidViewModel {
     private final LiveData<ArrayList<Long>> mObservableTypedStoryList;
 
     // This simplified constructor is used by StoryListActivity and CommentListActivity
+    // Used via StoryListViewModelFactory
+    @SuppressWarnings("unused")
     public StoryListViewModel(Application application) {
         this(application, "any");
     }
@@ -56,5 +57,7 @@ public class StoryListViewModel extends AndroidViewModel {
     }
 
     public LiveData<ArrayList<Long>> getTypedStoryList() { return mObservableTypedStoryList; }
+
+
 
 }

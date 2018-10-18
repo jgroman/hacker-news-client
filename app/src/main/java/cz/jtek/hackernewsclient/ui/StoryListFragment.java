@@ -71,6 +71,12 @@ public class StoryListFragment extends Fragment
     // This is a callback to onStorySelected in container activity
     OnStoryClickListener mStoryClickListenerCallback;
 
+    /**
+     * Create new instance of story fragment for stories of given type
+     *
+     * @param storyType
+     * @return
+     */
     public static Fragment newInstance(@NonNull String storyType) {
         Bundle arguments = new Bundle();
         arguments.putString(BUNDLE_STORY_TYPE, storyType);

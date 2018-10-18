@@ -52,6 +52,9 @@ public class DataRepository {
     private MediatorLiveData<List<Item>> mObservableStoryItems;
     private MediatorLiveData<List<Item>> mObservableCommentItems;
 
+    private MediatorLiveData<List<Item>> mObservableListedItems;
+
+
     private static List<Long> mItemsBeingLoaded;
 
     private static final Item EMPTY_ITEM = new Item();
@@ -212,6 +215,10 @@ public class DataRepository {
     public LiveData<List<Item>> getAllCommentItems() {
         Log.d(TAG, "*** getAllCommentItems: ");
         return mObservableCommentItems;
+    }
+
+    public LiveData<List<Item>> getItemList(long[] itemIds) {
+        return mItemDao.getItemsByIds(itemIds);
     }
 
     private Item findItemById(List<Item> itemList, long itemId) {
