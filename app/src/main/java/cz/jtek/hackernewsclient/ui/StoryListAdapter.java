@@ -33,7 +33,7 @@ import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.databinding.ItemStoryBinding;
 import cz.jtek.hackernewsclient.model.ItemViewModel;
 
-public class StoryListAdapter extends ListAdapter<Long, StoryListAdapter.StoryViewHolder> {
+public class StoryListAdapter extends ListAdapter<Item, StoryListAdapter.StoryViewHolder> {
 
     @SuppressWarnings("unused")
     private static final String TAG = StoryListAdapter.class.getSimpleName();
@@ -47,7 +47,7 @@ public class StoryListAdapter extends ListAdapter<Long, StoryListAdapter.StoryVi
     private ItemViewModel mItemModel;
 
     protected StoryListAdapter(Activity activity, StoryListOnClickListener clickListener) {
-        super(DIFF_CALLBACK);
+        super(Item.DIFF_CALLBACK);
 
         mItemModel = ViewModelProviders.of((StoryListActivity) activity).get(ItemViewModel.class);
         mClickListener = clickListener;
@@ -83,8 +83,8 @@ public class StoryListAdapter extends ListAdapter<Long, StoryListAdapter.StoryVi
         @Override
         public void onClick(View view) {
             int itemPos = getAdapterPosition();
-            long itemId = getItem(itemPos);
-            mClickListener.onClick(itemId);
+            Item item = getItem(itemPos);
+            mClickListener.onClick(item.getId());
         }
     }
 
@@ -99,22 +99,12 @@ public class StoryListAdapter extends ListAdapter<Long, StoryListAdapter.StoryVi
     @Override
     public void onBindViewHolder(@NonNull StoryViewHolder holder, int position) {
         Log.d(TAG, "*** onBindViewHolder: binding " + position + " to " + getItem(position));
-        holder.bind(mItemModel.getItem(getItem(position)));
+        Item bindedItem = getItem(position);
+        if (!bindedItem.getIsLoaded()) {
+            // If item is not present in db yet, start loading from API
+            mItemModel.getItem(bindedItem.getId());
+        }
+        holder.bind(bindedItem);
     }
-
-    private static final DiffUtil.ItemCallback<Long> DIFF_CALLBACK =
-            new DiffUtil.ItemCallback<Long>() {
-                @Override
-                public boolean areItemsTheSame(@NonNull Long oldItem, @NonNull Long newItem) {
-                    // Item properties may have changed if reloaded from the DB, but ID is fixed
-                    return oldItem.equals(newItem);
-                }
-                @Override
-                public boolean areContentsTheSame(@NonNull Long oldItem, @NonNull Long newItem) {
-                    // NOTE: if you use equals, your object must properly override Object#equals()
-                    // Incorrectly returning false here will result in too many animations.
-                    return oldItem.equals(newItem);
-                }
-            };
 
 }

@@ -19,7 +19,9 @@ package cz.jtek.hackernewsclient.data;
 import android.app.Application;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
+import android.arch.lifecycle.MutableLiveData;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.io.IOException;
@@ -127,22 +129,12 @@ public class DataRepository {
     /**
      * Gets list of all story ids belonging to specific story type
      *
-     * @param storyLists
-     * @param storyType
-     * @return
+     * @param storyType Story type string
+     * @return StoryList
      */
-    public LiveData<ArrayList<Long>> getTypedStoryList(List<StoryList> storyLists, String storyType) {
+    public LiveData<StoryList> getTypedStoryList(String storyType) {
         Log.d(TAG, "*** getTypedStoryList: " + storyType);
-        if (storyLists == null) return null;
-
-        for(StoryList storyList : storyLists) {
-            if (storyList.getType().equals(storyType)) {
-                MediatorLiveData<ArrayList<Long>> sl = new MediatorLiveData<>();
-                sl.setValue(storyList.getStories());
-                return sl;
-            }
-        }
-        return null;
+        return mStoryListDao.getStoryList(storyType);
     }
 
     /**
@@ -217,8 +209,32 @@ public class DataRepository {
         return mObservableCommentItems;
     }
 
-    public LiveData<List<Item>> getItemList(long[] itemIds) {
-        return mItemDao.getItemsByIds(itemIds);
+    public LiveData<List<Item>> getItemList(@NonNull List<Long> itemIds) {
+        Log.d(TAG, "*** getItemList: ");
+
+        // Get items currently in db
+        LiveData<List<Item>> itemListLD = mItemDao.getItemsByIds(itemIds);
+        List<Item> itemList = itemListLD.getValue();
+
+        if (itemList == null) {
+            itemList = new ArrayList<>();
+        }
+
+        // Insert missing ids as new empty item
+        for (Long itemId : itemIds) {
+            if (findItemById(itemList, itemId) == null) {
+                Item item = new Item();
+                item.setId(itemId);
+                item.setTitle("Loading " + Long.toString(itemId));
+                item.setText(Long.toString(itemId));
+                itemList.add(item);
+            }
+        }
+
+        MutableLiveData<List<Item>> result = new MutableLiveData<>();
+        result.setValue(itemList);
+
+        return result;
     }
 
     private Item findItemById(List<Item> itemList, long itemId) {

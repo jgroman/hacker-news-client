@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "15d0c09e058ce2bd12a035a3d1a604c7",
+    "identityHash": "74ed4427b5cf9aad3d92a3d3f7ef60bf",
     "entities": [
       {
         "tableName": "items",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `deleted` INTEGER, `type` TEXT NOT NULL, `by` TEXT, `text` TEXT, `dead` INTEGER, `parent` INTEGER NOT NULL, `poll` INTEGER NOT NULL, `kids` TEXT, `url` TEXT, `score` INTEGER NOT NULL, `title` TEXT, `parts` TEXT, `descendants` INTEGER NOT NULL, `nest-level` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `deleted` INTEGER, `type` TEXT NOT NULL, `by` TEXT, `text` TEXT, `dead` INTEGER, `parent` INTEGER NOT NULL, `poll` INTEGER NOT NULL, `kids` TEXT, `url` TEXT, `score` INTEGER NOT NULL, `title` TEXT, `parts` TEXT, `descendants` INTEGER NOT NULL, `nest-level` INTEGER NOT NULL, `is-loaded` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -97,6 +97,12 @@
             "columnName": "nest-level",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "isLoaded",
+            "columnName": "is-loaded",
+            "affinity": "INTEGER",
+            "notNull": false
           }
         ],
         "primaryKey": {
@@ -146,7 +152,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"15d0c09e058ce2bd12a035a3d1a604c7\")"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"74ed4427b5cf9aad3d92a3d3f7ef60bf\")"
     ]
   }
 }

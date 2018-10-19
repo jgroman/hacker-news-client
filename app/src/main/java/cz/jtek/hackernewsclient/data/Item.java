@@ -61,6 +61,7 @@ public class Item extends BaseObservable implements Parcelable {
     static final String PARTS = "parts";
     static final String DESCENDANTS = "descendants";
     static final String NEST_LEVEL = "nest-level";
+    static final String IS_LOADED = "is-loaded";
 
     // Members
     @PrimaryKey
@@ -109,6 +110,9 @@ public class Item extends BaseObservable implements Parcelable {
 
     @ColumnInfo(name = NEST_LEVEL)
     private int nestLevel;
+
+    @ColumnInfo(name = IS_LOADED)
+    private Boolean isLoaded;
 
     // Getters & Setters
     @Bindable
@@ -217,6 +221,11 @@ public class Item extends BaseObservable implements Parcelable {
         notifyPropertyChanged(BR.nestLevel);
     }
 
+    public Boolean getIsLoaded() { return isLoaded; }
+    public void setIsLoaded(Boolean isLoaded) {
+        this.isLoaded = isLoaded;
+    }
+
     // Default constructor
     public Item() {
         this.id = 0;
@@ -234,6 +243,7 @@ public class Item extends BaseObservable implements Parcelable {
         this.parts = null;
         this.descendants = 0;
         this.nestLevel = DEFAULT_NESTING_LEVEL;
+        this.isLoaded = false;
     }
 
     // Constructor converting JSON object to instance of this class
@@ -275,6 +285,9 @@ public class Item extends BaseObservable implements Parcelable {
 
         // Nesting level is not contained in JSON, it is calculated during comment tree unpacking
         item.setNestLevel(DEFAULT_NESTING_LEVEL);
+
+        // Loaded status is not contained in JSON
+        item.setIsLoaded(true);
 
         return item;
     }
@@ -318,6 +331,7 @@ public class Item extends BaseObservable implements Parcelable {
         parcel.writeList(this.parts);
         parcel.writeInt(this.descendants);
         parcel.writeInt(this.nestLevel);
+        parcel.writeInt(this.isLoaded ? 1 : 0);
     }
 
     // Constructor from incoming Parcel
@@ -339,6 +353,7 @@ public class Item extends BaseObservable implements Parcelable {
         in.readList(this.parts, null);
         this.descendants = in.readInt();
         this.nestLevel = in.readInt();
+        this.isLoaded = in.readInt() != 0;
     }
 
     // Parcelable creator
@@ -391,6 +406,7 @@ public class Item extends BaseObservable implements Parcelable {
 
                     if (oldItem.getDescendants() != newItem.getDescendants()) return false;
                     //if (oldItem.getNestLevel() != newItem.getNestLevel()) return true;
+                    if (oldItem.getIsLoaded() != newItem.getIsLoaded()) return false;
 
                     return true;
                 }

@@ -34,6 +34,6 @@ public interface StoryListDao {
     LiveData<List<StoryList>> getAllStoryLists();
 
     @Query("SELECT * FROM " + StoryList.TABLE_NAME + " WHERE " + StoryList.COL_TYPE + " = :storyType")
-    StoryList getStoryList(String storyType);
+    LiveData<StoryList> getStoryList(String storyType);
 
 }

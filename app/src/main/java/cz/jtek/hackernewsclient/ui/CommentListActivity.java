@@ -23,14 +23,11 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.model.ItemViewModel;
 import cz.jtek.hackernewsclient.model.ItemViewModelFactory;
-import cz.jtek.hackernewsclient.model.StoryListViewModel;
-import cz.jtek.hackernewsclient.model.StoryListViewModelFactory;
 
 public class CommentListActivity extends AppCompatActivity
         implements CommentListFragment.OnCommentClickListener{

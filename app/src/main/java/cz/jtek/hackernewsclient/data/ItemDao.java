@@ -38,7 +38,7 @@ public interface ItemDao {
     LiveData<List<Item>> getAllStoryItems();
 
     @Query("SELECT * FROM " + Item.TABLE_NAME + " WHERE " + Item.ID + " IN (:itemIds)")
-    LiveData<List<Item>> getItemsByIds(long[] itemIds);
+    LiveData<List<Item>> getItemsByIds(List<Long> itemIds);
 
     @Query("SELECT * FROM " + Item.TABLE_NAME + " WHERE " + Item.ID + " = :itemId")
     Item getItem(long itemId);

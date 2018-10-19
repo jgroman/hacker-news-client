@@ -4,6 +4,7 @@ import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
+import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Transformations;
 
 import java.util.ArrayList;
@@ -22,16 +23,10 @@ public class StoryListViewModel extends AndroidViewModel {
 
     private final MediatorLiveData<List<StoryList>> mObservableStoryLists;
 
-    private final LiveData<ArrayList<Long>> mObservableTypedStoryList;
+    private MutableLiveData<String> mObservableStoryType;
+    private final LiveData<StoryList> mObservableTypedStoryList;
 
-    // This simplified constructor is used by StoryListActivity and CommentListActivity
-    // Used via StoryListViewModelFactory
-    @SuppressWarnings("unused")
     public StoryListViewModel(Application application) {
-        this(application, "any");
-    }
-
-    public StoryListViewModel(Application application, String storyType) {
         super(application);
 
         // Get repository singleton instance
@@ -45,8 +40,14 @@ public class StoryListViewModel extends AndroidViewModel {
         LiveData<List<StoryList>> storyLists = mRepository.getAllStoryLists();
         mObservableStoryLists.addSource(storyLists, mObservableStoryLists::setValue);
 
-        mObservableTypedStoryList = Transformations.switchMap(mObservableStoryLists,
-                (List<StoryList> stories) -> mRepository.getTypedStoryList(stories, storyType));
+        // On mObservableStoryType change set new source for mObservableTypedStoryList
+        // mObservableStoryType is changed using setStoryType()
+        mObservableStoryType = new MutableLiveData<>();
+        mObservableStoryType.setValue(null);
+        mObservableTypedStoryList = Transformations.switchMap(
+                mObservableStoryType,
+                storyType -> mRepository.getTypedStoryList(storyType)
+        );
     }
 
     /**
@@ -56,7 +57,8 @@ public class StoryListViewModel extends AndroidViewModel {
         return mObservableStoryLists;
     }
 
-    public LiveData<ArrayList<Long>> getTypedStoryList() { return mObservableTypedStoryList; }
+    public void setStoryType(String storyType) { this.mObservableStoryType.setValue(storyType); }
+    public LiveData<StoryList> getTypedStoryList() { return mObservableTypedStoryList; }
 
 
 

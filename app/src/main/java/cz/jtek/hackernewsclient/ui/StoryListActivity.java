@@ -39,7 +39,6 @@ import java.util.List;
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.data.StoryList;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
-import cz.jtek.hackernewsclient.model.StoryListViewModelFactory;
 
 public class StoryListActivity extends AppCompatActivity
         implements StoryListFragment.OnStoryClickListener {

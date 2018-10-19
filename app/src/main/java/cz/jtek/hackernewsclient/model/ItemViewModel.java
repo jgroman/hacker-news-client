@@ -28,9 +28,10 @@ public class ItemViewModel extends AndroidViewModel {
     private final MediatorLiveData<List<Item>> mObservableStoryItems;
     private final MediatorLiveData<List<Item>> mObservableCommentItems;
 
+    private final MutableLiveData<Integer> mObservableItemId;
     private final LiveData<ArrayList<Long>> mObservableItemKidsList;
 
-    private MutableLiveData<long[]> mListedItemIds;
+    private MutableLiveData<List<Long>> mListedItemIds;
     private final LiveData<List<Item>> mObservableListedItems;
 
     public ItemViewModel(Application application) {
@@ -63,9 +64,17 @@ public class ItemViewModel extends AndroidViewModel {
         LiveData<List<Item>> commentItems = mRepository.getAllCommentItems();
         mObservableCommentItems.addSource(commentItems, mObservableCommentItems::setValue);
 
-        mObservableItemKidsList = Transformations.switchMap(mObservableItems,
-                itemList -> mRepository.getItemKidsList(itemList, itemId));
+        mObservableItemId = new MutableLiveData<>();
+        mObservableItemId.setValue(null);
+        mObservableItemKidsList = Transformations.switchMap(
+                mObservableItems,
+                itemList -> mRepository.getItemKidsList(itemList, itemId)
+        );
 
+        // On mListedItemIds change set new source for mObservableListedItems
+        // mListedItemIds is changed using setItemList()
+        mListedItemIds = new MutableLiveData<>();
+        mListedItemIds.setValue(new ArrayList<>());
         mObservableListedItems = Transformations.switchMap(
                 mListedItemIds,
                 itemIds -> mRepository.getItemList(itemIds)
@@ -87,16 +96,26 @@ public class ItemViewModel extends AndroidViewModel {
         return mObservableCommentItems;
     }
 
+    public void setIdItemKids(Integer itemId) { this.mObservableItemId.setValue(itemId); }
     public LiveData<ArrayList<Long>> getItemKidsList() { return mObservableItemKidsList; }
 
     public Item getItem(long itemId) {
         return mRepository.getItem(itemId);
     }
 
-    public void setItemList(long[] itemIds) {
+    /**
+     * Set list of item ids to be included in getListedItems() LiveData
+     *
+     * @param itemIds
+     */
+    public void setItemList(List<Long> itemIds) {
         this.mListedItemIds.setValue(itemIds);
     }
 
+    /**
+     *
+     * @return
+     */
     public LiveData<List<Item>> getListedItems() {
         return mObservableListedItems;
     }

@@ -16,7 +16,6 @@
 
 package cz.jtek.hackernewsclient.ui;
 
-import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
@@ -31,7 +30,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import cz.jtek.hackernewsclient.R;
@@ -39,7 +37,6 @@ import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.data.StoryList;
 import cz.jtek.hackernewsclient.model.ItemViewModel;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
-import cz.jtek.hackernewsclient.model.StoryListViewModelFactory;
 
 public class StoryListFragment extends Fragment
     implements StoryListAdapter.StoryListOnClickListener {
@@ -130,9 +127,10 @@ public class StoryListFragment extends Fragment
             }
         }
 
-        mStoryListModel = ViewModelProviders.of(this,
-                new StoryListViewModelFactory(mActivity.getApplication(), mStoryType))
-                .get(StoryListViewModel.class);
+        mStoryListModel = ViewModelProviders.of(this).get(StoryListViewModel.class);
+
+        // Configure model getTypedStoryList() to provide story list of given type
+        mStoryListModel.setStoryType(mStoryType);
 
         mItemModel = ViewModelProviders.of(mActivity).get(ItemViewModel.class);
 
@@ -145,25 +143,19 @@ public class StoryListFragment extends Fragment
 
         final StoryListAdapter adapter = new StoryListAdapter(mActivity, this);
 
-        // Create the observer for story item list which updates the UI
-        final Observer<ArrayList<Long>> itemListObserver = itemList -> {
-            if (itemList != null && itemList.size() > 0)
-                Log.d(TAG, "*** onChanged: itemList, updating list adapter: " + mStoryType);
-            else
-                Log.d(TAG, "*** onChanged: itemList, list null");
+        // Story item list observer updates source list for mItemModel.getListedItems()
+        final Observer<StoryList> itemIdsObserver = itemIdList -> {
+            Log.d(TAG, "*** onChanged: itemIdList, notifying list transformation - " + mStoryType);
+            mItemModel.setItemList(itemIdList.getStories());
+        };
+        mStoryListModel.getTypedStoryList().observe(this, itemIdsObserver);
+
+        // Item list observer updates UI
+        final Observer<List<Item>> itemsObserver = itemList -> {
+            Log.d(TAG, "*** adapter story items livedata updated - " + mStoryType);
             adapter.submitList(itemList);
         };
-        // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer
-        mStoryListModel.getTypedStoryList().observe(this, itemListObserver);
-
-        // Create the observer for items which updates the UI
-        final Observer<List<Item>> itemsObserver = item -> {
-            Log.d(TAG, "*** adapter story items livedata updated ");
-            adapter.notifyDataSetChanged();
-            //adapter.submitList(itemList);
-        };
-        // Observe the LiveData, passing in this activity as the LifecycleOwner and the observer
-        mItemModel.getAllItems().observe(this, itemsObserver);
+        mItemModel.getListedItems().observe(this, itemsObserver);
 
         mStoryListRecyclerView.setAdapter(adapter);
 

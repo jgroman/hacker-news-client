@@ -30,9 +30,9 @@ public class StoryList {
     @SuppressWarnings("unused")
     private static final String TAG = StoryList.class.getSimpleName();
 
-    public static final String TABLE_NAME = "story_lists";
-    public static final String COL_TYPE = "type";
-    public static final String COL_STORIES = "stories";
+    static final String TABLE_NAME = "story_lists";
+    static final String COL_TYPE = "type";
+    static final String COL_STORIES = "stories";
 
     @PrimaryKey
     @NonNull
