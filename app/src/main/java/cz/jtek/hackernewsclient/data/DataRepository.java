@@ -37,7 +37,7 @@ import cz.jtek.hackernewsclient.utils.NetworkUtils;
 public class DataRepository {
 
     @SuppressWarnings("unused")
-    static final String TAG = DataRepository.class.getSimpleName();
+    private static final String TAG = DataRepository.class.getSimpleName();
 
     private static final boolean USE_MOCK_DATA = true;
 
@@ -211,33 +211,10 @@ public class DataRepository {
 
     public LiveData<List<Item>> getItemList(@NonNull List<Long> itemIds) {
         Log.d(TAG, "*** getItemList: ");
-
-        // Get items currently in db
-        LiveData<List<Item>> itemListLD = mItemDao.getItemsByIds(itemIds);
-        List<Item> itemList = itemListLD.getValue();
-
-        if (itemList == null) {
-            itemList = new ArrayList<>();
-        }
-
-        // Insert missing ids as new empty item
-        for (Long itemId : itemIds) {
-            if (findItemById(itemList, itemId) == null) {
-                Item item = new Item();
-                item.setId(itemId);
-                item.setTitle("Loading " + Long.toString(itemId));
-                item.setText(Long.toString(itemId));
-                itemList.add(item);
-            }
-        }
-
-        MutableLiveData<List<Item>> result = new MutableLiveData<>();
-        result.setValue(itemList);
-
-        return result;
+        return mItemDao.getItemsByIds(itemIds);
     }
 
-    private Item findItemById(List<Item> itemList, long itemId) {
+    public Item findItemById(List<Item> itemList, long itemId) {
         if (itemList == null) return null;
         for(Item item : itemList) {
             if (item.getId() == itemId) {
@@ -380,6 +357,7 @@ public class DataRepository {
             long itemId = longs[0];
 
             try {
+                Log.d(TAG, "*** doInBackground: loading " + itemId);
                 if (USE_MOCK_DATA) {
                     // Mock request used for debugging to avoid sending network queries
                     jsonItem = MockDataUtils.getMockItemJson(app.getResources(), app.getPackageName(), itemId);

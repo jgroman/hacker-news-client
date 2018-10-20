@@ -101,6 +101,12 @@ public class StoryListFragment extends Fragment
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mActivity = (StoryListActivity) getActivity();
+
+        // Story list ViewModel is scoped for this fragment instance only because story type is unique
+        mStoryListModel = ViewModelProviders.of(this).get(StoryListViewModel.class);
+
+        // Item ViewModel  is scoped for this fragment instance only because item list is unique
+        mItemModel = ViewModelProviders.of(this).get(ItemViewModel.class);
     }
 
     @Nullable
@@ -127,12 +133,8 @@ public class StoryListFragment extends Fragment
             }
         }
 
-        mStoryListModel = ViewModelProviders.of(this).get(StoryListViewModel.class);
-
-        // Configure model getTypedStoryList() to provide story list of given type
+        // Configure mStoryListModel getTypedStoryList() to provide story list of given type
         mStoryListModel.setStoryType(mStoryType);
-
-        mItemModel = ViewModelProviders.of(mActivity).get(ItemViewModel.class);
 
         mStoryListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_story_list,
                 container, false);
@@ -146,13 +148,30 @@ public class StoryListFragment extends Fragment
         // Story item list observer updates source list for mItemModel.getListedItems()
         final Observer<StoryList> itemIdsObserver = itemIdList -> {
             Log.d(TAG, "*** onChanged: itemIdList, notifying list transformation - " + mStoryType);
-            mItemModel.setItemList(itemIdList.getStories());
+            if (itemIdList != null) {
+                mItemModel.setItemList(itemIdList.getStories());
+            }
         };
         mStoryListModel.getTypedStoryList().observe(this, itemIdsObserver);
 
         // Item list observer updates UI
         final Observer<List<Item>> itemsObserver = itemList -> {
             Log.d(TAG, "*** adapter story items livedata updated - " + mStoryType);
+
+            /*
+            // Inserting empty items for missing ids
+            List<Long> itemIdList = mItemModel.getItemList();
+            for (Long itemId : itemIdList) {
+                if (mItemModel.mRepository.findItemById(itemList, itemId) == null) {
+                    Item item = new Item();
+                    item.setId(itemId);
+                    item.setTitle("Loading " + Long.toString(itemId));
+                    item.setText(Long.toString(itemId));
+                    itemList.add(item);
+                }
+            }
+            */
+
             adapter.submitList(itemList);
         };
         mItemModel.getListedItems().observe(this, itemsObserver);

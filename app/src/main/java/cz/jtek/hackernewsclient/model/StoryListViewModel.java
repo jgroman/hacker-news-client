@@ -6,6 +6,7 @@ import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Transformations;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,9 +58,21 @@ public class StoryListViewModel extends AndroidViewModel {
         return mObservableStoryLists;
     }
 
-    public void setStoryType(String storyType) { this.mObservableStoryType.setValue(storyType); }
-    public LiveData<StoryList> getTypedStoryList() { return mObservableTypedStoryList; }
+    /**
+     * Sets the story type for getTypedStoryList()
+     *
+     * @param storyType Story type string
+     */
+    public void setStoryType(String storyType) {
+        mObservableStoryType.setValue(storyType);
+    }
 
-
+    /**
+     *
+     * @return
+     */
+    public LiveData<StoryList> getTypedStoryList() {
+        return mObservableTypedStoryList;
+    }
 
 }

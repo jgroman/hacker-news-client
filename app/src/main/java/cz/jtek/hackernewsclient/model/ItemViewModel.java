@@ -22,7 +22,7 @@ public class ItemViewModel extends AndroidViewModel {
     @SuppressWarnings("unused")
     static final String TAG = StoryListViewModel.class.getSimpleName();
 
-    private DataRepository mRepository;
+    public DataRepository mRepository;
 
     private final MediatorLiveData<List<Item>> mObservableItems;
     private final MediatorLiveData<List<Item>> mObservableStoryItems;
@@ -77,7 +77,33 @@ public class ItemViewModel extends AndroidViewModel {
         mListedItemIds.setValue(new ArrayList<>());
         mObservableListedItems = Transformations.switchMap(
                 mListedItemIds,
-                itemIds -> mRepository.getItemList(itemIds)
+                itemIds -> {
+                    Log.d(TAG, "*** ItemViewModel: transform");
+                    LiveData<List<Item>> itemListLD =  mRepository.getItemList(itemIds);
+                    List<Item> itemList = itemListLD.getValue();
+
+                    if (itemList == null) {
+                        itemList = new ArrayList<>();
+                    }
+
+                    List<Long> itemIdList = mListedItemIds.getValue();
+                    Log.d(TAG, "*** ItemViewModel: adding " + itemIdList.size());
+
+                    for (Long id : itemIdList) {
+                        if (mRepository.findItemById(itemList, id) == null) {
+                            Item item = new Item();
+                            item.setId(id);
+                            item.setTitle("Loading " + Long.toString(id));
+                            item.setText(Long.toString(id));
+                            itemList.add(item);
+                        }
+                    }
+
+                    MutableLiveData<List<Item>> updatedListLD = new MutableLiveData<>();
+                    updatedListLD.postValue(itemList);
+
+                    return updatedListLD;
+                }
         );
 
     }
@@ -109,7 +135,11 @@ public class ItemViewModel extends AndroidViewModel {
      * @param itemIds
      */
     public void setItemList(List<Long> itemIds) {
-        this.mListedItemIds.setValue(itemIds);
+        mListedItemIds.setValue(itemIds);
+    }
+
+    public List<Long> getItemList() {
+        return mListedItemIds.getValue();
     }
 
     /**

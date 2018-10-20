@@ -231,16 +231,16 @@ public class Item extends BaseObservable implements Parcelable {
         this.id = 0;
         this.deleted = false;
         this.type = "";
-        this.by = null;
-        this.text = null;
+        this.by = "";
+        this.text = "";
         this.dead = false;
         this.parent = 0;
         this.poll = 0;
-        this.kids = null;
-        this.url = null;
+        this.kids = new ArrayList<>();
+        this.url = "";
         this.score = 0;
-        this.title = null;
-        this.parts = null;
+        this.title = "";
+        this.parts = new ArrayList<>();
         this.descendants = 0;
         this.nestLevel = DEFAULT_NESTING_LEVEL;
         this.isLoaded = false;
@@ -252,9 +252,9 @@ public class Item extends BaseObservable implements Parcelable {
 
         item.setId(jo.optLong(ID));
         item.setDeleted(jo.optBoolean(DELETED));
-        item.setType(jo.optString(TYPE, null));
-        item.setBy(jo.optString(BY, null));
-        item.setText(jo.optString(TEXT, null));
+        item.setType(jo.optString(TYPE, ""));
+        item.setBy(jo.optString(BY, ""));
+        item.setText(jo.optString(TEXT, ""));
         item.setDead(jo.optBoolean(DEAD));
         item.setParent(jo.optLong(PARENT));
         item.setPoll(jo.optLong(POLL));
@@ -268,9 +268,9 @@ public class Item extends BaseObservable implements Parcelable {
             item.setKids(arrKids);
         }
 
-        item.setUrl(jo.optString(URL, null));
+        item.setUrl(jo.optString(URL, ""));
         item.setScore(jo.optInt(SCORE));
-        item.setTitle(jo.optString(TITLE, null));
+        item.setTitle(jo.optString(TITLE, ""));
 
         ja = jo.optJSONArray(PARTS);
         if (ja != null) {
