@@ -33,6 +33,7 @@ public class ItemViewModel extends AndroidViewModel {
 
     private MutableLiveData<List<Long>> mListedItemIds;
     private final LiveData<List<Item>> mObservableListedItems;
+    private final LiveData<List<Item>> mObservableFullItemList;
 
     public ItemViewModel(Application application) {
         this(application, 0);
@@ -78,34 +79,61 @@ public class ItemViewModel extends AndroidViewModel {
         mObservableListedItems = Transformations.switchMap(
                 mListedItemIds,
                 itemIds -> {
-                    Log.d(TAG, "*** ItemViewModel: transform");
+                    // itemIds holds list of items to be obtained from db
                     LiveData<List<Item>> itemListLD =  mRepository.getItemList(itemIds);
                     List<Item> itemList = itemListLD.getValue();
+                    Log.d(TAG, "ItemViewModel: transform 1");
 
                     if (itemList == null) {
                         itemList = new ArrayList<>();
                     }
 
-                    List<Long> itemIdList = mListedItemIds.getValue();
-                    Log.d(TAG, "*** ItemViewModel: adding " + itemIdList.size());
+                    List<Item> itemsToInsert = new ArrayList<>();
 
-                    for (Long id : itemIdList) {
-                        if (mRepository.findItemById(itemList, id) == null) {
+                    for (Long id : itemIds) {
+                        if (Item.findItemInList(itemList, id) == null) {
                             Item item = new Item();
                             item.setId(id);
                             item.setTitle("Loading " + Long.toString(id));
                             item.setText(Long.toString(id));
-                            itemList.add(item);
+                            itemsToInsert.add(item);
+                        }
+                    }
+
+                    // Insert items present in list but missing in db
+                    mRepository.insertItems(itemsToInsert);
+                    Log.d(TAG, "*** ItemViewModel: transform 1, expected size " + itemIds.size() + ", adding " + itemsToInsert.size());
+
+                    return itemListLD;
+                }
+        );
+
+        // On mObservableListedItems change sort result according to mListedItemIds
+        mObservableFullItemList = Transformations.switchMap(
+                mObservableListedItems,
+                unsortedItemList -> {
+                    Log.d(TAG, "ItemViewModel: transform 2, source items " + unsortedItemList.size());
+
+                    Item workItem;
+                    List<Item> sortedItems = new ArrayList<>();
+                    List<Long> sortedIds = mListedItemIds.getValue();
+
+                    // Sort item list according to mListedItemIds
+                    if (sortedIds != null) {
+                        for (Long id : sortedIds) {
+                            workItem = Item.findItemInList(unsortedItemList, id);
+                            if (workItem != null) {
+                                sortedItems.add(workItem);
+                            }
                         }
                     }
 
                     MutableLiveData<List<Item>> updatedListLD = new MutableLiveData<>();
-                    updatedListLD.postValue(itemList);
+                    updatedListLD.setValue(sortedItems);
 
                     return updatedListLD;
                 }
         );
-
     }
 
 
@@ -150,6 +178,9 @@ public class ItemViewModel extends AndroidViewModel {
         return mObservableListedItems;
     }
 
+    public LiveData<List<Item>> getUpdatedListedItems() {
+        return mObservableFullItemList;
+    }
 
 
 }

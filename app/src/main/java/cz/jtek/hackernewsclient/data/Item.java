@@ -32,6 +32,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import cz.jtek.hackernewsclient.BR;
 
@@ -363,6 +364,23 @@ public class Item extends BaseObservable implements Parcelable {
     };
 
     /**
+     * Search list of items for item with given id
+     *
+     * @param itemList
+     * @param itemId
+     * @return
+     */
+    public static Item findItemInList(List<Item> itemList, long itemId) {
+        if (itemList == null) return null;
+        for(Item item : itemList) {
+            if (item.getId() == itemId) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Diff callback
      * Used by ListAdapter
      *
@@ -413,5 +431,3 @@ public class Item extends BaseObservable implements Parcelable {
             };
 
 }
-
-

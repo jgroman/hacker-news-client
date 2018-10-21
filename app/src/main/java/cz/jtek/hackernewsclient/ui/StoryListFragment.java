@@ -156,25 +156,10 @@ public class StoryListFragment extends Fragment
 
         // Item list observer updates UI
         final Observer<List<Item>> itemsObserver = itemList -> {
-            Log.d(TAG, "*** adapter story items livedata updated - " + mStoryType);
-
-            /*
-            // Inserting empty items for missing ids
-            List<Long> itemIdList = mItemModel.getItemList();
-            for (Long itemId : itemIdList) {
-                if (mItemModel.mRepository.findItemById(itemList, itemId) == null) {
-                    Item item = new Item();
-                    item.setId(itemId);
-                    item.setTitle("Loading " + Long.toString(itemId));
-                    item.setText(Long.toString(itemId));
-                    itemList.add(item);
-                }
-            }
-            */
-
+            Log.d(TAG, "*** adapter story items livedata updated - " + mStoryType + " items " + itemList.size());
             adapter.submitList(itemList);
         };
-        mItemModel.getListedItems().observe(this, itemsObserver);
+        mItemModel.getUpdatedListedItems().observe(this, itemsObserver);
 
         mStoryListRecyclerView.setAdapter(adapter);
 

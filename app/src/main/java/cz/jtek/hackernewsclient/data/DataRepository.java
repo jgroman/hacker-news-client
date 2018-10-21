@@ -49,7 +49,7 @@ public class DataRepository {
     private StoryListDao mStoryListDao;
     private MediatorLiveData<List<StoryList>> mObservableStoryLists;
 
-    private ItemDao mItemDao;
+    public ItemDao mItemDao;
     private MediatorLiveData<List<Item>> mObservableItems;
     private MediatorLiveData<List<Item>> mObservableStoryItems;
     private MediatorLiveData<List<Item>> mObservableCommentItems;
@@ -210,24 +210,14 @@ public class DataRepository {
     }
 
     public LiveData<List<Item>> getItemList(@NonNull List<Long> itemIds) {
-        Log.d(TAG, "*** getItemList: ");
+        Log.d(TAG, "getItemList: get list size " + itemIds.size());
         return mItemDao.getItemsByIds(itemIds);
-    }
-
-    public Item findItemById(List<Item> itemList, long itemId) {
-        if (itemList == null) return null;
-        for(Item item : itemList) {
-            if (item.getId() == itemId) {
-                return item;
-            }
-        }
-        return null;
     }
 
     public Item getItem(long itemId) {
         List<Item> itemList = mObservableItems.getValue();
 
-        Item item = findItemById(itemList, itemId);
+        Item item = Item.findItemInList(itemList, itemId);
         if (item != null) {
             // Item is already loaded in db
             Log.d(TAG, "*** getItem: " + itemId + " found in cache");
@@ -255,7 +245,7 @@ public class DataRepository {
 
         if (kidList != null && kidList.size() > 0) {
             for (long kidId : kidList) {
-                Item kidItem = findItemById(itemList, kidId);
+                Item kidItem = Item.findItemInList(itemList, kidId);
                 if (kidItem != null) {
                     kidItem.setNestLevel(nestLevel);
                     //Log.d(TAG, "updateKidNestLevel: " + kidId + ", level " + nestLevel);
@@ -275,7 +265,7 @@ public class DataRepository {
     public int getItemNestLevel(List<Item> itemList, long itemId) {
         if (itemList == null) return -1;
 
-        Item item = findItemById(itemList, itemId);
+        Item item = Item.findItemInList(itemList, itemId);
         if (item != null) {
             if (item.getParent() == 0) {
                 return 1;
@@ -305,7 +295,7 @@ public class DataRepository {
 
         resultKidList = new ArrayList<>();
 
-        parentItem = findItemById(itemList, itemId);
+        parentItem = Item.findItemInList(itemList, itemId);
         if (parentItem != null) {
             resultKidList = parentItem.getKids();
             if (resultKidList != null && resultKidList.size() > 0) {
@@ -316,7 +306,7 @@ public class DataRepository {
                 // Traversing comment tree, using cached items only
                 do {
                     //Log.d(TAG, "getItemKidsList: processing kid list position " + currentKidIndex);
-                    workItem = findItemById(itemList, resultKidList.get(currentKidIndex));
+                    workItem = Item.findItemInList(itemList, resultKidList.get(currentKidIndex));
                     if (workItem != null) {
                         currentNestingLevel = workItem.getNestLevel();
                         //Log.d(TAG, "getItemKidsList: adding kids from " + workItem.getId() + " at level " + currentNestingLevel);
@@ -357,7 +347,6 @@ public class DataRepository {
             long itemId = longs[0];
 
             try {
-                Log.d(TAG, "*** doInBackground: loading " + itemId);
                 if (USE_MOCK_DATA) {
                     // Mock request used for debugging to avoid sending network queries
                     jsonItem = MockDataUtils.getMockItemJson(app.getResources(), app.getPackageName(), itemId);
@@ -399,4 +388,24 @@ public class DataRepository {
             return null;
         }
     }
+
+    public void insertItems(List<Item> items) {
+        new InsertItemsTask(mItemDao).execute(items);
+    }
+
+    private static class InsertItemsTask extends AsyncTask<List<Item>, Void, Void> {
+        private ItemDao mItemDao;
+
+        InsertItemsTask(ItemDao itemDao) {
+            mItemDao = itemDao;
+        }
+
+        @Override
+        protected Void doInBackground(List<Item>... lists) {
+            List<Item> itemList = lists[0];
+            mItemDao.insertItems(itemList);
+            return null;
+        }
+    }
+
 }

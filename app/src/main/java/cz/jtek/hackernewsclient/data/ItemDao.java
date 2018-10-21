@@ -46,6 +46,9 @@ public interface ItemDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(Item item);
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertItems(List<Item> items);
+
     @Update
     void updateItems(Item... items);
 
