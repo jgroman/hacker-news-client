@@ -34,9 +34,6 @@ public interface ItemDao {
     @Query("SELECT * FROM " + Item.TABLE_NAME + " WHERE " + Item.TYPE + " = 'comment'")
     LiveData<List<Item>> getAllCommentItems();
 
-    @Query("SELECT * FROM " + Item.TABLE_NAME + " WHERE " + Item.TYPE + " = 'story'")
-    LiveData<List<Item>> getAllStoryItems();
-
     @Query("SELECT * FROM " + Item.TABLE_NAME + " WHERE " + Item.ID + " IN (:itemIds)")
     LiveData<List<Item>> getItemsByIds(List<Long> itemIds);
 

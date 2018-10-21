@@ -159,7 +159,7 @@ public class StoryListFragment extends Fragment
             Log.d(TAG, "*** adapter story items livedata updated - " + mStoryType + " items " + itemList.size());
             adapter.submitList(itemList);
         };
-        mItemModel.getUpdatedListedItems().observe(this, itemsObserver);
+        mItemModel.getSortedListedItems().observe(this, itemsObserver);
 
         mStoryListRecyclerView.setAdapter(adapter);
 

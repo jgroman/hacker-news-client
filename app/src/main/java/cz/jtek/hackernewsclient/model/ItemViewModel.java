@@ -5,9 +5,7 @@ import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
 import android.arch.lifecycle.MutableLiveData;
-import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.Transformations;
-import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -20,19 +18,17 @@ import cz.jtek.hackernewsclient.data.Item;
 public class ItemViewModel extends AndroidViewModel {
 
     @SuppressWarnings("unused")
-    static final String TAG = StoryListViewModel.class.getSimpleName();
+    private static final String TAG = StoryListViewModel.class.getSimpleName();
 
-    public DataRepository mRepository;
+    private DataRepository mRepository;
 
     private final MediatorLiveData<List<Item>> mObservableItems;
-    private final MediatorLiveData<List<Item>> mObservableStoryItems;
     private final MediatorLiveData<List<Item>> mObservableCommentItems;
 
     private final MutableLiveData<Integer> mObservableItemId;
     private final LiveData<ArrayList<Long>> mObservableItemKidsList;
 
     private MutableLiveData<List<Long>> mListedItemIds;
-    private final LiveData<List<Item>> mObservableListedItems;
     private final LiveData<List<Item>> mObservableFullItemList;
 
     public ItemViewModel(Application application) {
@@ -45,19 +41,11 @@ public class ItemViewModel extends AndroidViewModel {
         // Get repository singleton instance
         mRepository = ((HackerNewsClientApplication) application).getRepository();
 
-        mObservableItems = new MediatorLiveData<>();
-        // By default set to null until we get data from the database
-        mObservableItems.setValue(null);
-
         // Observe changes of all items in the database and forward them to observers
+        mObservableItems = new MediatorLiveData<>();
+        mObservableItems.setValue(null);
         LiveData<List<Item>> items = mRepository.getAllItems();
         mObservableItems.addSource(items, mObservableItems::setValue);
-
-        // Observe changes of story items in the database and forward them to observers
-        mObservableStoryItems = new MediatorLiveData<>();
-        mObservableStoryItems.setValue(null);
-        LiveData<List<Item>> storyItems = mRepository.getAllStoryItems();
-        mObservableStoryItems.addSource(storyItems, mObservableStoryItems::setValue);
 
         // Observe changes of comment items in the database and forward them to observers
         mObservableCommentItems = new MediatorLiveData<>();
@@ -76,13 +64,12 @@ public class ItemViewModel extends AndroidViewModel {
         // mListedItemIds is changed using setItemList()
         mListedItemIds = new MutableLiveData<>();
         mListedItemIds.setValue(new ArrayList<>());
-        mObservableListedItems = Transformations.switchMap(
+        LiveData<List<Item>> observableUnsortedItems = Transformations.switchMap(
                 mListedItemIds,
                 itemIds -> {
                     // itemIds holds list of items to be obtained from db
                     LiveData<List<Item>> itemListLD =  mRepository.getItemList(itemIds);
                     List<Item> itemList = itemListLD.getValue();
-                    Log.d(TAG, "ItemViewModel: transform 1");
 
                     if (itemList == null) {
                         itemList = new ArrayList<>();
@@ -102,15 +89,15 @@ public class ItemViewModel extends AndroidViewModel {
 
                     // Insert items present in list but missing in db
                     mRepository.insertItems(itemsToInsert);
-                    Log.d(TAG, "*** ItemViewModel: transform 1, expected size " + itemIds.size() + ", adding " + itemsToInsert.size());
 
                     return itemListLD;
                 }
         );
 
         // On mObservableListedItems change sort result according to mListedItemIds
+        // Chained to observableUnsortedItems transformation
         mObservableFullItemList = Transformations.switchMap(
-                mObservableListedItems,
+                observableUnsortedItems,
                 unsortedItemList -> {
                     Log.d(TAG, "ItemViewModel: transform 2, source items " + unsortedItemList.size());
 
@@ -128,22 +115,16 @@ public class ItemViewModel extends AndroidViewModel {
                         }
                     }
 
-                    MutableLiveData<List<Item>> updatedListLD = new MutableLiveData<>();
-                    updatedListLD.setValue(sortedItems);
+                    MutableLiveData<List<Item>> sortedListLD = new MutableLiveData<>();
+                    sortedListLD.setValue(sortedItems);
 
-                    return updatedListLD;
+                    return sortedListLD;
                 }
         );
     }
 
-
-
     public LiveData<List<Item>> getAllItems() {
         return mObservableItems;
-    }
-
-    public LiveData<List<Item>> getAllStoryItems() {
-        return mObservableStoryItems;
     }
 
     public LiveData<List<Item>> getAllCommentItems() {
@@ -160,25 +141,13 @@ public class ItemViewModel extends AndroidViewModel {
     /**
      * Set list of item ids to be included in getListedItems() LiveData
      *
-     * @param itemIds
+     * @param itemIds Item ids
      */
     public void setItemList(List<Long> itemIds) {
         mListedItemIds.setValue(itemIds);
     }
 
-    public List<Long> getItemList() {
-        return mListedItemIds.getValue();
-    }
-
-    /**
-     *
-     * @return
-     */
-    public LiveData<List<Item>> getListedItems() {
-        return mObservableListedItems;
-    }
-
-    public LiveData<List<Item>> getUpdatedListedItems() {
+    public LiveData<List<Item>> getSortedListedItems() {
         return mObservableFullItemList;
     }
 

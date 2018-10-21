@@ -49,13 +49,9 @@ public class DataRepository {
     private StoryListDao mStoryListDao;
     private MediatorLiveData<List<StoryList>> mObservableStoryLists;
 
-    public ItemDao mItemDao;
+    private ItemDao mItemDao;
     private MediatorLiveData<List<Item>> mObservableItems;
-    private MediatorLiveData<List<Item>> mObservableStoryItems;
     private MediatorLiveData<List<Item>> mObservableCommentItems;
-
-    private MediatorLiveData<List<Item>> mObservableListedItems;
-
 
     private static List<Long> mItemsBeingLoaded;
 
@@ -98,10 +94,6 @@ public class DataRepository {
         mObservableItems = new MediatorLiveData<>();
         mObservableItems.addSource(mItemDao.getAllItems(),
                 value -> mObservableItems.postValue(value));
-
-        mObservableStoryItems = new MediatorLiveData<>();
-        mObservableStoryItems.addSource(mItemDao.getAllStoryItems(),
-                allStories -> mObservableStoryItems.postValue(allStories));
 
         mObservableCommentItems = new MediatorLiveData<>();
         mObservableCommentItems.addSource(mItemDao.getAllCommentItems(),
@@ -197,11 +189,6 @@ public class DataRepository {
     public LiveData<List<Item>> getAllItems() {
         Log.d(TAG, "*** getAllItems: ");
         return mObservableItems;
-    }
-
-    public LiveData<List<Item>> getAllStoryItems() {
-        Log.d(TAG, "*** getAllStoryItems: ");
-        return mObservableStoryItems;
     }
 
     public LiveData<List<Item>> getAllCommentItems() {
@@ -390,7 +377,7 @@ public class DataRepository {
     }
 
     public void insertItems(List<Item> items) {
-        new InsertItemsTask(mItemDao).execute(items);
+        new InsertItemsTask(mItemDao).execute(items)
     }
 
     private static class InsertItemsTask extends AsyncTask<List<Item>, Void, Void> {

@@ -21,9 +21,7 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
 import android.support.v7.recyclerview.extensions.ListAdapter;
-import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,7 +44,7 @@ public class StoryListAdapter extends ListAdapter<Item, StoryListAdapter.StoryVi
 
     private ItemViewModel mItemModel;
 
-    protected StoryListAdapter(Activity activity, StoryListOnClickListener clickListener) {
+    StoryListAdapter(Activity activity, StoryListOnClickListener clickListener) {
         super(Item.DIFF_CALLBACK);
 
         mItemModel = ViewModelProviders.of((StoryListActivity) activity).get(ItemViewModel.class);
@@ -98,13 +96,12 @@ public class StoryListAdapter extends ListAdapter<Item, StoryListAdapter.StoryVi
 
     @Override
     public void onBindViewHolder(@NonNull StoryViewHolder holder, int position) {
-        Log.d(TAG, "*** onBindViewHolder: binding " + position + " to " + getItem(position));
-        Item bindedItem = getItem(position);
-        if (!bindedItem.getIsLoaded()) {
+        Item bindItem = getItem(position);
+        if (!bindItem.getIsLoaded()) {
             // If item is not present in db yet, start loading from API
-            mItemModel.getItem(bindedItem.getId());
+            mItemModel.getItem(bindItem.getId());
         }
-        holder.bind(bindedItem);
+        holder.bind(bindItem);
     }
 
 }
