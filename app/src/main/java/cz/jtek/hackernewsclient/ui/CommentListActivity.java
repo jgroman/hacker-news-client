@@ -27,7 +27,6 @@ import android.support.v7.widget.Toolbar;
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.model.ItemViewModel;
-import cz.jtek.hackernewsclient.model.ItemViewModelFactory;
 
 public class CommentListActivity extends AppCompatActivity
         implements CommentListFragment.OnCommentClickListener{
@@ -71,10 +70,7 @@ public class CommentListActivity extends AppCompatActivity
             mStoryId = savedInstanceState.getLong(EXTRA_STORY_ID);
         }
 
-        mItemModel = ViewModelProviders.of(this,
-                new ItemViewModelFactory(getApplication(), mStoryId))
-                .get(ItemViewModel.class);
-
+        mItemModel = ViewModelProviders.of(this).get(ItemViewModel.class);
         Item parentStoryItem = mItemModel.getItem(mStoryId);
 
         mToolbarLayout = findViewById(R.id.ctl_story);

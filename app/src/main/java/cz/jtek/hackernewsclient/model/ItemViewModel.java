@@ -25,39 +25,39 @@ public class ItemViewModel extends AndroidViewModel {
     private final MediatorLiveData<List<Item>> mObservableItems;
     private final MediatorLiveData<List<Item>> mObservableCommentItems;
 
-    private final MutableLiveData<Integer> mObservableItemId;
-    private final LiveData<ArrayList<Long>> mObservableItemKidsList;
+    private final MutableLiveData<Long> mObservableParentItemId;
+    private final LiveData<List<Long>> mObservableItemKidsList;
 
     private MutableLiveData<List<Long>> mListedItemIds;
     private final LiveData<List<Item>> mObservableFullItemList;
 
     public ItemViewModel(Application application) {
-        this(application, 0);
-    }
-
-    public ItemViewModel(Application application, long itemId) {
         super(application);
 
         // Get repository singleton instance
         mRepository = ((HackerNewsClientApplication) application).getRepository();
 
-        // Observe changes of all items in the database and forward them to observers
+        // Observe changes of all items in db
         mObservableItems = new MediatorLiveData<>();
         mObservableItems.setValue(null);
-        LiveData<List<Item>> items = mRepository.getAllItems();
-        mObservableItems.addSource(items, mObservableItems::setValue);
+        mObservableItems.addSource(
+                mRepository.getAllItems(),
+                mObservableItems::setValue
+        );
 
-        // Observe changes of comment items in the database and forward them to observers
+        // Observe changes of comment items in db
         mObservableCommentItems = new MediatorLiveData<>();
         mObservableCommentItems.setValue(null);
-        LiveData<List<Item>> commentItems = mRepository.getAllCommentItems();
-        mObservableCommentItems.addSource(commentItems, mObservableCommentItems::setValue);
+        mObservableCommentItems.addSource(
+                mRepository.getAllCommentItems(),
+                mObservableCommentItems::setValue
+        );
 
-        mObservableItemId = new MutableLiveData<>();
-        mObservableItemId.setValue(null);
+        mObservableParentItemId = new MutableLiveData<>();
+        mObservableParentItemId.setValue(null);
         mObservableItemKidsList = Transformations.switchMap(
-                mObservableItems,
-                itemList -> mRepository.getItemKidsList(itemList, itemId)
+                mObservableParentItemId,
+                parentItemId -> mRepository.getItemKids(parentItemId)
         );
 
         // On mListedItemIds change set new source for mObservableListedItems
@@ -131,8 +131,8 @@ public class ItemViewModel extends AndroidViewModel {
         return mObservableCommentItems;
     }
 
-    public void setIdItemKids(Integer itemId) { this.mObservableItemId.setValue(itemId); }
-    public LiveData<ArrayList<Long>> getItemKidsList() { return mObservableItemKidsList; }
+    public void setParentItemId(Long itemId) { this.mObservableParentItemId.setValue(itemId); }
+    public LiveData<List<Long>> getItemKidsList() { return mObservableItemKidsList; }
 
     public Item getItem(long itemId) {
         return mRepository.getItem(itemId);

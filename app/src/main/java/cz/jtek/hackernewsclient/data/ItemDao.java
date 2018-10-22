@@ -40,6 +40,9 @@ public interface ItemDao {
     @Query("SELECT * FROM " + Item.TABLE_NAME + " WHERE " + Item.ID + " = :itemId")
     Item getItem(long itemId);
 
+    @Query("SELECT " + Item.KIDS + " FROM " + Item.TABLE_NAME + " WHERE " + Item.ID + " = :itemId")
+    LiveData<List<Long>> getItemKids(Long itemId);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(Item item);
 

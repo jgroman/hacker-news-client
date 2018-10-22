@@ -30,14 +30,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.model.ItemViewModel;
-import cz.jtek.hackernewsclient.model.ItemViewModelFactory;
-import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
 public class CommentListFragment extends Fragment
     implements CommentListAdapter.CommentListOnClickListener {
@@ -94,6 +91,9 @@ public class CommentListFragment extends Fragment
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mActivity = (CommentListActivity) getActivity();
+
+        // Item ViewModel is scoped for this fragment instance only
+        mItemModel = ViewModelProviders.of(this).get(ItemViewModel.class);
     }
 
     @Nullable
@@ -119,10 +119,6 @@ public class CommentListFragment extends Fragment
             }
         }
 
-        mItemModel = ViewModelProviders.of(this,
-                new ItemViewModelFactory(mActivity.getApplication(), mParentStoryId))
-                .get(ItemViewModel.class);
-
         mCommentListRecyclerView = (RecyclerView) inflater.inflate(R.layout.fragment_comment_list,
                 container, false);
 
@@ -133,7 +129,7 @@ public class CommentListFragment extends Fragment
         mCommentListAdapter = new CommentListAdapter(mActivity, this);
 
         // Observer for kid (comment) list
-        final Observer<ArrayList<Long>> kidListObserver = kidList -> {
+        final Observer<List<Long>> kidListObserver = kidList -> {
             Log.d(TAG, "*** adapter kid list livedata updated");
             // On kid list changes update adapter contents
             // ListAdapter handles source list diffing by itself

@@ -71,8 +71,8 @@ public class StoryListFragment extends Fragment
     /**
      * Create new instance of story fragment for stories of given type
      *
-     * @param storyType
-     * @return
+     * @param storyType Story type string
+     * @return Fragment instance
      */
     public static Fragment newInstance(@NonNull String storyType) {
         Bundle arguments = new Bundle();

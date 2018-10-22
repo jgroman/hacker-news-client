@@ -88,16 +88,23 @@ public class DataRepository {
         mItemDao = mDatabase.itemDao();
 
         mObservableStoryLists = new MediatorLiveData<>();
-        mObservableStoryLists.addSource(mStoryListDao.getAllStoryLists(),
-                storyLists -> mObservableStoryLists.postValue(storyLists));
+        mObservableStoryLists.addSource(
+                mStoryListDao.getAllStoryLists(),
+                storyLists -> mObservableStoryLists.postValue(storyLists)
+        );
 
+        // Observe item changes in db
         mObservableItems = new MediatorLiveData<>();
-        mObservableItems.addSource(mItemDao.getAllItems(),
-                value -> mObservableItems.postValue(value));
+        mObservableItems.addSource(
+                mItemDao.getAllItems(),
+                value -> mObservableItems.postValue(value)
+        );
 
         mObservableCommentItems = new MediatorLiveData<>();
-        mObservableCommentItems.addSource(mItemDao.getAllCommentItems(),
-                allComments -> mObservableCommentItems.postValue(allComments));
+        mObservableCommentItems.addSource(
+                mItemDao.getAllCommentItems(),
+                allComments -> mObservableCommentItems.postValue(allComments)
+        );
 
         mItemsBeingLoaded = new ArrayList<>();
 
@@ -315,6 +322,15 @@ public class DataRepository {
         return result;
     }
 
+    /**
+     *
+     * @param itemId
+     * @return
+     */
+    public LiveData<List<Long>> getItemKids(Long itemId) {
+        return mItemDao.getItemKids(itemId);
+    }
+
 
     private static class LoadItemTask extends AsyncTask<Long, Void, Void> {
 
@@ -377,7 +393,7 @@ public class DataRepository {
     }
 
     public void insertItems(List<Item> items) {
-        new InsertItemsTask(mItemDao).execute(items)
+        new InsertItemsTask(mItemDao).execute(items);
     }
 
     private static class InsertItemsTask extends AsyncTask<List<Item>, Void, Void> {
