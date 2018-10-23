@@ -38,16 +38,10 @@ public interface ItemDao {
     LiveData<List<Item>> getItemsByIds(List<Long> itemIds);
 
     @Query("SELECT * FROM " + Item.TABLE_NAME + " WHERE " + Item.ID + " = :itemId")
-    Item getItem(long itemId);
-
-    @Query("SELECT " + Item.KIDS + " FROM " + Item.TABLE_NAME + " WHERE " + Item.ID + " = :itemId")
-    LiveData<List<Long>> getItemKids(Long itemId);
+    LiveData<Item> getItem(Long itemId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(Item item);
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertItems(List<Item> items);
+    void insert(Item... item);
 
     @Update
     void updateItems(Item... items);

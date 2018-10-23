@@ -19,7 +19,6 @@ package cz.jtek.hackernewsclient.data;
 import android.app.Application;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
-import android.arch.lifecycle.MutableLiveData;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.util.Log;
@@ -54,8 +53,6 @@ public class DataRepository {
     private MediatorLiveData<List<Item>> mObservableCommentItems;
 
     private static List<Long> mItemsBeingLoaded;
-
-    private static final Item EMPTY_ITEM = new Item();
 
     /**
      * Returns repository singleton instance
@@ -108,9 +105,6 @@ public class DataRepository {
 
         mItemsBeingLoaded = new ArrayList<>();
 
-        EMPTY_ITEM.setTitle("...");
-        EMPTY_ITEM.setText(".....");
-
         // Start loading story lists
         new LoadStoryListsTask(mApplication, mStoryListDao).execute();
     }
@@ -137,7 +131,7 @@ public class DataRepository {
     }
 
     /**
-     * Async loader for story lists
+     * Background task for loading story lists from network API
      */
     private static class LoadStoryListsTask extends AsyncTask<Void, Void, Void> {
 
@@ -193,28 +187,22 @@ public class DataRepository {
     }
 
 
-    public LiveData<List<Item>> getAllItems() {
-        Log.d(TAG, "*** getAllItems: ");
-        return mObservableItems;
-    }
-
-    public LiveData<List<Item>> getAllCommentItems() {
-        Log.d(TAG, "*** getAllCommentItems: ");
-        return mObservableCommentItems;
-    }
-
     public LiveData<List<Item>> getItemList(@NonNull List<Long> itemIds) {
         Log.d(TAG, "getItemList: get list size " + itemIds.size());
         return mItemDao.getItemsByIds(itemIds);
     }
 
-    public Item getItem(long itemId) {
+    public LiveData<Item> getItem(Long itemId) {
+        return mItemDao.getItem(itemId);
+    }
+
+    public Item fetchItem(long itemId) {
         List<Item> itemList = mObservableItems.getValue();
 
         Item item = Item.findItemInList(itemList, itemId);
         if (item != null) {
             // Item is already loaded in db
-            Log.d(TAG, "*** getItem: " + itemId + " found in cache");
+            Log.d(TAG, "*** fetchItem: " + itemId + " found in cache");
             mItemsBeingLoaded.remove(itemId);
             return item;
         }
@@ -222,16 +210,16 @@ public class DataRepository {
         if (!mItemsBeingLoaded.contains(itemId)) {
             // Item is not cached or being loaded yet, start loading from API
             // LiveData will propagate item data to cache automagically
-            Log.d(TAG, "*** getItem: asynctask loading " + itemId);
+            Log.d(TAG, "*** fetchItem: asynctask fetching " + itemId);
             mItemsBeingLoaded.add(itemId);
-            new LoadItemTask(mApplication, mItemDao).execute(itemId);
+            new FetchItemTask(mApplication, mItemDao).execute(itemId);
         }
         else {
-            Log.d(TAG, "*** getItem: in progress " + itemId);
+            Log.d(TAG, "*** fetchItem: in progress " + itemId);
         }
 
         // Return empty item
-        return EMPTY_ITEM;
+        return Item.newEmptyItem(itemId);
     }
 
     private void updateKidNestLevel(List<Item> itemList, ArrayList<Long> kidList, int nestLevel) {
@@ -243,7 +231,7 @@ public class DataRepository {
                 if (kidItem != null) {
                     kidItem.setNestLevel(nestLevel);
                     //Log.d(TAG, "updateKidNestLevel: " + kidId + ", level " + nestLevel);
-                    new UpdateItemsTask(mApplication, mItemDao).execute(kidItem);
+                    new UpdateItemsTask( mItemDao).execute(kidItem);
                 }
             }
         }
@@ -322,22 +310,16 @@ public class DataRepository {
         return result;
     }
 
+
     /**
-     *
-     * @param itemId
-     * @return
+     * Task for fetching item data from network API
      */
-    public LiveData<List<Long>> getItemKids(Long itemId) {
-        return mItemDao.getItemKids(itemId);
-    }
-
-
-    private static class LoadItemTask extends AsyncTask<Long, Void, Void> {
+    private static class FetchItemTask extends AsyncTask<Long, Void, Void> {
 
         private Application app;
         private ItemDao mItemDao;
 
-        LoadItemTask(Application application, ItemDao dao) {
+        FetchItemTask(Application application, ItemDao dao) {
             this.app = application;
             this.mItemDao = dao;
         }
@@ -364,11 +346,7 @@ public class DataRepository {
                 resultItem = itemResult.getResult();
             } catch (IOException iex) {
                 Log.e(TAG, String.format("IOException when fetching API item data: %s", iex.getMessage()));
-                resultItem = new Item();
-                resultItem.setId(itemId);
-                resultItem.setTitle("Loading " + Long.toString(itemId) + " failed...");
-                resultItem.setText("Loading " + Long.toString(itemId) + " failed...");
-                resultItem.setType("comment");
+                resultItem = Item.newFailedItem(itemId);
             }
 
             mItemDao.insert(resultItem);
@@ -376,12 +354,13 @@ public class DataRepository {
         }
     }
 
+    /**
+     * Background task for updating items in db
+     */
     private static class UpdateItemsTask extends AsyncTask<Item, Void, Void> {
-        private Application mApp;
         private ItemDao mItemDao;
 
-        UpdateItemsTask(Application application, ItemDao itemDao) {
-            mApp = application;
+        UpdateItemsTask(ItemDao itemDao) {
             mItemDao = itemDao;
         }
 
@@ -392,11 +371,14 @@ public class DataRepository {
         }
     }
 
-    public void insertItems(List<Item> items) {
+    public void insertItems(Item[] items) {
         new InsertItemsTask(mItemDao).execute(items);
     }
 
-    private static class InsertItemsTask extends AsyncTask<List<Item>, Void, Void> {
+    /**
+     * Background task for inserting items to db
+     */
+    private static class InsertItemsTask extends AsyncTask<Item, Void, Void> {
         private ItemDao mItemDao;
 
         InsertItemsTask(ItemDao itemDao) {
@@ -404,9 +386,8 @@ public class DataRepository {
         }
 
         @Override
-        protected Void doInBackground(List<Item>... lists) {
-            List<Item> itemList = lists[0];
-            mItemDao.insertItems(itemList);
+        protected Void doInBackground(Item... items) {
+            mItemDao.insert(items);
             return null;
         }
     }

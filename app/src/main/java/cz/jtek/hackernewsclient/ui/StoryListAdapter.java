@@ -99,7 +99,7 @@ public class StoryListAdapter extends ListAdapter<Item, StoryListAdapter.StoryVi
         Item bindItem = getItem(position);
         if (!bindItem.getIsLoaded()) {
             // If item is not present in db yet, start loading from API
-            mItemModel.getItem(bindItem.getId());
+            mItemModel.fetchItem(bindItem.getId());
         }
         holder.bind(bindItem);
     }

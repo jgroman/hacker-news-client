@@ -128,24 +128,24 @@ public class CommentListFragment extends Fragment
 
         mCommentListAdapter = new CommentListAdapter(mActivity, this);
 
-        // Observer for kid (comment) list
+        mItemModel.setObservableItemId(mParentStoryId);
+
+        // Observer for kid (comment) list updates source list for mItemModel.getListedItems()
         final Observer<List<Long>> kidListObserver = kidList -> {
             Log.d(TAG, "*** adapter kid list livedata updated");
-            // On kid list changes update adapter contents
-            // ListAdapter handles source list diffing by itself
-            mCommentListAdapter.submitList(kidList);
+            mItemModel.setObservableListIds(kidList);
         };
         // Start observing kid list LiveData
         mItemModel.getItemKidsList().observe(this, kidListObserver);
 
-        // Create the observer for comment items which updates the recycler view
-        final Observer<List<Item>> commentsObserver = comment -> {
-            Log.d(TAG, "*** adapter comment item livedata updated");
+        // Observer for kid list items
+        final Observer<List<Item>> commentKidsObserver = commentKidList -> {
+            Log.d(TAG, "*** adapter kid list items livedata updated");
             // Content of some comment changed, repaint recycler view
-            mCommentListAdapter.notifyDataSetChanged();
+            mCommentListAdapter.submitList(commentKidList);
         };
         // Observe comment LiveData
-        mItemModel.getAllCommentItems().observe(this, commentsObserver);
+        mItemModel.getSortedListedItems().observe(this, commentKidsObserver);
 
         mCommentListRecyclerView.setAdapter(mCommentListAdapter);
 

@@ -18,14 +18,11 @@ import cz.jtek.hackernewsclient.data.Item;
 public class ItemViewModel extends AndroidViewModel {
 
     @SuppressWarnings("unused")
-    private static final String TAG = StoryListViewModel.class.getSimpleName();
+    private static final String TAG = ItemViewModel.class.getSimpleName();
 
     private DataRepository mRepository;
 
-    private final MediatorLiveData<List<Item>> mObservableItems;
-    private final MediatorLiveData<List<Item>> mObservableCommentItems;
-
-    private final MutableLiveData<Long> mObservableParentItemId;
+    private final MutableLiveData<Long> mObservableItemId;
     private final LiveData<List<Long>> mObservableItemKidsList;
 
     private MutableLiveData<List<Long>> mListedItemIds;
@@ -37,31 +34,33 @@ public class ItemViewModel extends AndroidViewModel {
         // Get repository singleton instance
         mRepository = ((HackerNewsClientApplication) application).getRepository();
 
-        // Observe changes of all items in db
-        mObservableItems = new MediatorLiveData<>();
-        mObservableItems.setValue(null);
-        mObservableItems.addSource(
-                mRepository.getAllItems(),
-                mObservableItems::setValue
+        // On mObservableItemId change update source for observableItem
+        mObservableItemId = new MutableLiveData<>();
+        mObservableItemId.setValue(null);
+        LiveData<Item> observableItem = Transformations.switchMap(
+                mObservableItemId,
+                itemId -> mRepository.getItem(itemId)
         );
 
-        // Observe changes of comment items in db
-        mObservableCommentItems = new MediatorLiveData<>();
-        mObservableCommentItems.setValue(null);
-        mObservableCommentItems.addSource(
-                mRepository.getAllCommentItems(),
-                mObservableCommentItems::setValue
-        );
-
-        mObservableParentItemId = new MutableLiveData<>();
-        mObservableParentItemId.setValue(null);
+        // On observableItem change update source for mObservableItemKidsList
+        // Chained to mObservableItemId change
         mObservableItemKidsList = Transformations.switchMap(
-                mObservableParentItemId,
-                parentItemId -> mRepository.getItemKids(parentItemId)
+                observableItem,
+                parentItem -> {
+                    Log.d(TAG, "ItemViewModel: getting kids of " + parentItem.getId());
+                    List<Long> kidList = parentItem.getKids();
+                    Log.d(TAG, "ItemViewModel: kid list size " + kidList.size());
+
+                    // TODO Traversing comment tree
+
+                    MutableLiveData<List<Long>> resultLD = new MutableLiveData<>();
+                    resultLD.setValue(kidList);
+                    return resultLD;
+                }
         );
 
-        // On mListedItemIds change set new source for mObservableListedItems
-        // mListedItemIds is changed using setItemList()
+        // On mListedItemIds change update source for mObservableListedItems
+        // mListedItemIds is changed using setObservableListIds()
         mListedItemIds = new MutableLiveData<>();
         mListedItemIds.setValue(new ArrayList<>());
         LiveData<List<Item>> observableUnsortedItems = Transformations.switchMap(
@@ -75,20 +74,19 @@ public class ItemViewModel extends AndroidViewModel {
                         itemList = new ArrayList<>();
                     }
 
-                    List<Item> itemsToInsert = new ArrayList<>();
-
+                    // itemsToInsert will be filled with Items requested by list but missing in db
+                    ArrayList<Item> itemsToInsert = new ArrayList<>();
                     for (Long id : itemIds) {
                         if (Item.findItemInList(itemList, id) == null) {
-                            Item item = new Item();
-                            item.setId(id);
-                            item.setTitle("Loading " + Long.toString(id));
-                            item.setText(Long.toString(id));
-                            itemsToInsert.add(item);
+                            itemsToInsert.add(Item.newLoadingItem(id));
                         }
                     }
 
-                    // Insert items present in list but missing in db
-                    mRepository.insertItems(itemsToInsert);
+                    // Insert missing items to db
+                    Log.d(TAG, "ItemViewModel: inserting items to db " + itemsToInsert.size());
+                    Item[] itemArray = new Item[itemsToInsert.size()];
+                    itemsToInsert.toArray(itemArray);
+                    mRepository.insertItems(itemArray);
 
                     return itemListLD;
                 }
@@ -123,27 +121,36 @@ public class ItemViewModel extends AndroidViewModel {
         );
     }
 
-    public LiveData<List<Item>> getAllItems() {
-        return mObservableItems;
+    /**
+     * Fetch Item from repository
+     *
+     * @param itemId Id of item to be fetched
+     * @return Item
+     */
+    public Item fetchItem(long itemId) {
+        return mRepository.fetchItem(itemId);
     }
 
-    public LiveData<List<Item>> getAllCommentItems() {
-        return mObservableCommentItems;
+    /**
+     * Set source item id for getItemKidsList()
+     * @param itemId Source item id
+     */
+    public void setObservableItemId(Long itemId) {
+        Log.d(TAG, "setObservableItemId: " + itemId);
+        mObservableItemId.setValue(itemId);
     }
 
-    public void setParentItemId(Long itemId) { this.mObservableParentItemId.setValue(itemId); }
-    public LiveData<List<Long>> getItemKidsList() { return mObservableItemKidsList; }
-
-    public Item getItem(long itemId) {
-        return mRepository.getItem(itemId);
+    public LiveData<List<Long>> getItemKidsList() {
+        return mObservableItemKidsList;
     }
+
 
     /**
      * Set list of item ids to be included in getListedItems() LiveData
      *
      * @param itemIds Item ids
      */
-    public void setItemList(List<Long> itemIds) {
+    public void setObservableListIds(List<Long> itemIds) {
         mListedItemIds.setValue(itemIds);
     }
 

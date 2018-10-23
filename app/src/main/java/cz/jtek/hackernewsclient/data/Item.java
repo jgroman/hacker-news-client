@@ -430,4 +430,28 @@ public class Item extends BaseObservable implements Parcelable {
                 }
             };
 
+    static Item newEmptyItem(long itemId) {
+        Item item = new Item();
+        item.setId(itemId);
+        item.setText(".....");
+        item.setTitle("....");
+        return item;
+    }
+
+    public static Item newLoadingItem(long itemId) {
+        Item item = new Item();
+        item.setId(itemId);
+        item.setTitle("Loading " + Long.toString(itemId));
+        item.setText(Long.toString(itemId));
+        return item;
+    }
+
+    static Item newFailedItem(long itemId) {
+        Item item = new Item();
+        item.setId(itemId);
+        item.setTitle("Loading " + Long.toString(itemId) + " failed");
+        item.setText(Long.toString(itemId) + " failed");
+        return item;
+    }
+
 }

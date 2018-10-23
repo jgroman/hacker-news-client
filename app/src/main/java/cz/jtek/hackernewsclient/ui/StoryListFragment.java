@@ -149,7 +149,7 @@ public class StoryListFragment extends Fragment
         final Observer<StoryList> itemIdsObserver = itemIdList -> {
             Log.d(TAG, "*** onChanged: itemIdList, notifying list transformation - " + mStoryType);
             if (itemIdList != null) {
-                mItemModel.setItemList(itemIdList.getStories());
+                mItemModel.setObservableListIds(itemIdList.getStories());
             }
         };
         mStoryListModel.getTypedStoryList().observe(this, itemIdsObserver);

@@ -71,7 +71,7 @@ public class CommentListActivity extends AppCompatActivity
         }
 
         mItemModel = ViewModelProviders.of(this).get(ItemViewModel.class);
-        Item parentStoryItem = mItemModel.getItem(mStoryId);
+        Item parentStoryItem = mItemModel.fetchItem(mStoryId);
 
         mToolbarLayout = findViewById(R.id.ctl_story);
         mToolbar = findViewById(R.id.toolbar_story);

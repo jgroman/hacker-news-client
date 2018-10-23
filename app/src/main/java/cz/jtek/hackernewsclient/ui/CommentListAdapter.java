@@ -21,11 +21,9 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
 import android.support.v7.recyclerview.extensions.ListAdapter;
-import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.Spanned;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,7 +33,7 @@ import cz.jtek.hackernewsclient.databinding.ItemCommentBinding;
 import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.model.ItemViewModel;
 
-public class CommentListAdapter extends ListAdapter<Long, CommentListAdapter.CommentViewHolder> {
+public class CommentListAdapter extends ListAdapter<Item, CommentListAdapter.CommentViewHolder> {
 
     @SuppressWarnings("unused")
     private static final String TAG = CommentListAdapter.class.getSimpleName();
@@ -49,7 +47,7 @@ public class CommentListAdapter extends ListAdapter<Long, CommentListAdapter.Com
     private ItemViewModel mItemModel;
 
     CommentListAdapter(Activity activity, CommentListOnClickListener clickListener) {
-        super(DIFF_CALLBACK);
+        super(Item.DIFF_CALLBACK);
 
         mItemModel = ViewModelProviders.of((CommentListActivity) activity).get(ItemViewModel.class);
         mClickListener = clickListener;
@@ -85,8 +83,8 @@ public class CommentListAdapter extends ListAdapter<Long, CommentListAdapter.Com
         @Override
         public void onClick(View view) {
             int itemPos = getAdapterPosition();
-            long itemId = getItem(itemPos);
-            mClickListener.onClick(itemId);
+            Item clickedItem = getItem(itemPos);
+            mClickListener.onClick(clickedItem.getId());
         }
     }
 
@@ -100,36 +98,22 @@ public class CommentListAdapter extends ListAdapter<Long, CommentListAdapter.Com
 
     @Override
     public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
-        Log.d(TAG, "*** onBindViewHolder: binding " + position + " to " + getItem(position));
-        Item item = mItemModel.getItem(getItem(position));
+        Item bindItem = getItem(position);
+
+        if (!bindItem.getIsLoaded()) {
+            // If item is not present in db yet, start loading from API
+            mItemModel.fetchItem(bindItem.getId());
+        }
 
         // Clean comment text
-        if (item != null) {
-            String commentText = item.getText();
-            if (commentText != null && commentText.length() > 0) {
-                Spanned htmlResult = Html.fromHtml(commentText, Html.FROM_HTML_MODE_LEGACY);
-                if (htmlResult != null) {
-                    item.setText(htmlResult.toString());
-                }
+        String commentText = bindItem.getText();
+        if (commentText != null && commentText.length() > 0) {
+            Spanned htmlResult = Html.fromHtml(commentText, Html.FROM_HTML_MODE_LEGACY);
+            if (htmlResult != null) {
+                bindItem.setText(htmlResult.toString());
             }
         }
 
-        holder.bind(item);
+        holder.bind(bindItem);
     }
-
-    private static final DiffUtil.ItemCallback<Long> DIFF_CALLBACK =
-            new DiffUtil.ItemCallback<Long>() {
-                @Override
-                public boolean areItemsTheSame(@NonNull Long oldItem, @NonNull Long newItem) {
-                    // Item properties may have changed if reloaded from the DB, but ID is fixed
-                    return oldItem.equals(newItem);
-                }
-                @Override
-                public boolean areContentsTheSame(@NonNull Long oldItem, @NonNull Long newItem) {
-                    // NOTE: if you use equals, your object must properly override Object#equals()
-                    // Incorrectly returning false here will result in too many animations.
-                    return oldItem.equals(newItem);
-                }
-            };
-
 }
