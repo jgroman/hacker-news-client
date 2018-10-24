@@ -3,7 +3,6 @@ package cz.jtek.hackernewsclient.model;
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
-import android.arch.lifecycle.MediatorLiveData;
 import android.arch.lifecycle.MutableLiveData;
 import android.arch.lifecycle.Transformations;
 import android.util.Log;
@@ -26,7 +25,7 @@ public class ItemViewModel extends AndroidViewModel {
     private final LiveData<List<Long>> mObservableItemKidsList;
 
     private MutableLiveData<List<Long>> mListedItemIds;
-    private final LiveData<List<Item>> mObservableFullItemList;
+    private final LiveData<List<Item>> mObservableSortedItemList;
 
     public ItemViewModel(Application application) {
         super(application);
@@ -66,56 +65,51 @@ public class ItemViewModel extends AndroidViewModel {
         LiveData<List<Item>> observableUnsortedItems = Transformations.switchMap(
                 mListedItemIds,
                 itemIds -> {
-                    // itemIds holds list of items to be obtained from db
-                    LiveData<List<Item>> itemListLD =  mRepository.getItemList(itemIds);
-                    List<Item> itemList = itemListLD.getValue();
-
-                    if (itemList == null) {
-                        itemList = new ArrayList<>();
-                    }
-
-                    // itemsToInsert will be filled with Items requested by list but missing in db
-                    ArrayList<Item> itemsToInsert = new ArrayList<>();
-                    for (Long id : itemIds) {
-                        if (Item.findItemInList(itemList, id) == null) {
-                            itemsToInsert.add(Item.newLoadingItem(id));
-                        }
-                    }
-
-                    // Insert missing items to db
-                    Log.d(TAG, "ItemViewModel: inserting items to db " + itemsToInsert.size());
-                    Item[] itemArray = new Item[itemsToInsert.size()];
-                    itemsToInsert.toArray(itemArray);
-                    mRepository.insertItems(itemArray);
-
-                    return itemListLD;
+                    Log.d(TAG, "*** ItemViewModel: transform 1, set item list source " + itemIds.size());
+                    return mRepository.getItemList(itemIds);
                 }
         );
 
         // On mObservableListedItems change sort result according to mListedItemIds
         // Chained to observableUnsortedItems transformation
-        mObservableFullItemList = Transformations.switchMap(
+        mObservableSortedItemList = Transformations.switchMap(
                 observableUnsortedItems,
                 unsortedItemList -> {
-                    Log.d(TAG, "ItemViewModel: transform 2, source items " + unsortedItemList.size());
+                    Log.d(TAG, "*** ItemViewModel: transform 2, source items " + unsortedItemList.size());
 
                     Item workItem;
                     List<Item> sortedItems = new ArrayList<>();
                     List<Long> sortedIds = mListedItemIds.getValue();
 
-                    // Sort item list according to mListedItemIds
                     if (sortedIds != null) {
+                        ArrayList<Item> itemsToInsert = new ArrayList<>();
+
                         for (Long id : sortedIds) {
                             workItem = Item.findItemInList(unsortedItemList, id);
-                            if (workItem != null) {
+
+                            if (workItem == null) {
+                                // itemsToInsert will be filled with Items requested by list but
+                                // missing in db
+                                itemsToInsert.add(Item.newLoadingItem(id));
+                            }
+                            else {
+                                // sortedItems list will be filled with Items according
+                                // to mListedItemIds order
                                 sortedItems.add(workItem);
                             }
+                        }
+
+                        if (itemsToInsert.size() > 0) {
+                            // Insert missing items to db
+                            Log.d(TAG, "*** ItemViewModel: inserting items to db " + itemsToInsert.size());
+                            Item[] itemArray = new Item[itemsToInsert.size()];
+                            itemsToInsert.toArray(itemArray);
+                            mRepository.insertIgnoreItems(itemArray);
                         }
                     }
 
                     MutableLiveData<List<Item>> sortedListLD = new MutableLiveData<>();
                     sortedListLD.setValue(sortedItems);
-
                     return sortedListLD;
                 }
         );
@@ -155,7 +149,7 @@ public class ItemViewModel extends AndroidViewModel {
     }
 
     public LiveData<List<Item>> getSortedListedItems() {
-        return mObservableFullItemList;
+        return mObservableSortedItemList;
     }
 
 

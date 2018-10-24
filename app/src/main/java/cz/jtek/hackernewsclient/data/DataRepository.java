@@ -212,7 +212,7 @@ public class DataRepository {
             // LiveData will propagate item data to cache automagically
             Log.d(TAG, "*** fetchItem: asynctask fetching " + itemId);
             mItemsBeingLoaded.add(itemId);
-            new FetchItemTask(mApplication, mItemDao).execute(itemId);
+            new FetchItemTask(mApplication, mItemDao, true).execute(itemId);
         }
         else {
             Log.d(TAG, "*** fetchItem: in progress " + itemId);
@@ -318,38 +318,50 @@ public class DataRepository {
 
         private Application app;
         private ItemDao mItemDao;
+        private Boolean mReplace;
 
-        FetchItemTask(Application application, ItemDao dao) {
+        FetchItemTask(Application application, ItemDao dao, Boolean replace) {
             this.app = application;
             this.mItemDao = dao;
+            this.mReplace = replace;
         }
 
         @Override
         protected Void doInBackground(Long... longs) {
-            Item resultItem;
+            List<Item> resultItemList = new ArrayList<>();
             String jsonItem;
 
-            long itemId = longs[0];
+            for (Long itemId: longs) {
+                Log.d(TAG, "*** doInBackground: fetching " + itemId);
+                try {
+                    if (USE_MOCK_DATA) {
+                        // Mock request used for debugging to avoid sending network queries
+                        jsonItem = MockDataUtils.getMockItemJson(app.getResources(), app.getPackageName(), itemId);
+                    } else {
+                        URL itemUrl = HackerNewsApi.buildItemUrl(itemId);
+                        jsonItem = NetworkUtils.getResponseFromHttpUrl(itemUrl);
+                    }
 
-            try {
-                if (USE_MOCK_DATA) {
-                    // Mock request used for debugging to avoid sending network queries
-                    jsonItem = MockDataUtils.getMockItemJson(app.getResources(), app.getPackageName(), itemId);
-                } else {
-                    URL itemUrl = HackerNewsApi.buildItemUrl(itemId);
-                    jsonItem = NetworkUtils.getResponseFromHttpUrl(itemUrl);
+                    HackerNewsApi.HackerNewsJsonResult<Item> itemResult =
+                            HackerNewsApi.getItemFromJson(jsonItem);
+
+                    resultItemList.add(itemResult.getResult());
+                } catch (IOException iex) {
+                    Log.e(TAG, String.format("IOException when fetching API item data: %s", iex.getMessage()));
+                    resultItemList.add(Item.newFailedItem(itemId));
                 }
+            }
+            // Convert result list to array
+            Item[] itemArray = new Item[resultItemList.size()];
+            resultItemList.toArray(itemArray);
 
-                HackerNewsApi.HackerNewsJsonResult<Item> itemResult =
-                        HackerNewsApi.getItemFromJson(jsonItem);
-
-                resultItem = itemResult.getResult();
-            } catch (IOException iex) {
-                Log.e(TAG, String.format("IOException when fetching API item data: %s", iex.getMessage()));
-                resultItem = Item.newFailedItem(itemId);
+            if (mReplace) {
+                mItemDao.insertReplace(itemArray);
+            }
+            else {
+                mItemDao.insertIgnore(itemArray);
             }
 
-            mItemDao.insert(resultItem);
             return null;
         }
     }
@@ -371,7 +383,7 @@ public class DataRepository {
         }
     }
 
-    public void insertItems(Item[] items) {
+    public void insertIgnoreItems(Item[] items) {
         new InsertItemsTask(mItemDao).execute(items);
     }
 
@@ -387,7 +399,7 @@ public class DataRepository {
 
         @Override
         protected Void doInBackground(Item... items) {
-            mItemDao.insert(items);
+            mItemDao.insertIgnore(items);
             return null;
         }
     }

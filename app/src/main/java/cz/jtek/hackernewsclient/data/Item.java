@@ -443,6 +443,7 @@ public class Item extends BaseObservable implements Parcelable {
         item.setId(itemId);
         item.setTitle("Loading " + Long.toString(itemId));
         item.setText(Long.toString(itemId));
+        item.setIsLoaded(false);
         return item;
     }
 
@@ -451,6 +452,7 @@ public class Item extends BaseObservable implements Parcelable {
         item.setId(itemId);
         item.setTitle("Loading " + Long.toString(itemId) + " failed");
         item.setText(Long.toString(itemId) + " failed");
+        item.setIsLoaded(true);
         return item;
     }
 

@@ -41,7 +41,10 @@ public interface ItemDao {
     LiveData<Item> getItem(Long itemId);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(Item... item);
+    void insertReplace(Item... item);
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    void insertIgnore(Item... item);
 
     @Update
     void updateItems(Item... items);
