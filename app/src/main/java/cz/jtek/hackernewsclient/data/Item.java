@@ -442,7 +442,7 @@ public class Item extends BaseObservable implements Parcelable {
         Item item = new Item();
         item.setId(itemId);
         item.setTitle("Loading " + Long.toString(itemId));
-        item.setText(Long.toString(itemId));
+        item.setText("Loading " + Long.toString(itemId));
         item.setIsLoaded(false);
         return item;
     }

@@ -22,6 +22,7 @@ public class ItemViewModel extends AndroidViewModel {
     private DataRepository mRepository;
 
     private final MutableLiveData<Long> mObservableItemId;
+    private final LiveData<Item> mObservableItem;
     private final LiveData<List<Long>> mObservableItemKidsList;
 
     private MutableLiveData<List<Long>> mListedItemIds;
@@ -36,24 +37,75 @@ public class ItemViewModel extends AndroidViewModel {
         // On mObservableItemId change update source for observableItem
         mObservableItemId = new MutableLiveData<>();
         mObservableItemId.setValue(null);
-        LiveData<Item> observableItem = Transformations.switchMap(
+        mObservableItem = Transformations.switchMap(
                 mObservableItemId,
                 itemId -> mRepository.getItem(itemId)
         );
 
-        // On observableItem change update source for mObservableItemKidsList
-        // Chained to mObservableItemId change
+        // Accessible by getItemKidsList()
+        // On mObservableSortedItemList change update source for mObservableItemKidsList
+        // Chained to
         mObservableItemKidsList = Transformations.switchMap(
-                observableItem,
-                parentItem -> {
-                    Log.d(TAG, "ItemViewModel: getting kids of " + parentItem.getId());
-                    List<Long> kidList = parentItem.getKids();
-                    Log.d(TAG, "ItemViewModel: kid list size " + kidList.size());
+                mRepository.getAllItems(),
+                allItemList -> {
+                    ArrayList<Long> resultKidList = new ArrayList<>();
 
-                    // TODO Traversing comment tree
+                    if (allItemList != null) {
+                        Log.d(TAG, "ItemViewModel: all items size " + allItemList.size());
+                    }
+                    else {
+                        Log.d(TAG, "ItemViewModel: all items size 0");
+                    }
 
+                    if (mObservableItemId.getValue() == null) {
+                        return null;
+                    }
+
+                    Item parentItem = Item.findItemInList(allItemList, mObservableItemId.getValue());
+                    if (parentItem != null) {
+                        Log.d(TAG, "**** ItemViewModel: getting kids of " + parentItem.getId());
+                        resultKidList = parentItem.getKids();
+                        Log.d(TAG, "**** ItemViewModel: basic kid list size " + resultKidList.size());
+
+                        // TODO Traversing comment tree
+
+                        if (resultKidList.size() > 0) {
+                            Item workItem;
+                            ArrayList<Long> workKidList;
+                            // All items are set to nest level 1 by default when loading
+
+                            int currentKidIndex = 0;
+                            int totalKidsAdded = 0;
+                            // Traversing comment tree, using cached items only
+                            do {
+                                //Log.d(TAG, "getItemKidsList: processing kid list position " + currentKidIndex);
+                                // Check if current kid item is cached
+                                workItem = Item.findItemInList(allItemList, resultKidList.get(currentKidIndex));
+                                if (workItem != null) {
+                                    //currentNestingLevel = workItem.getNestLevel();
+                                    //Log.d(TAG, "getItemKidsList: adding kids from " + workItem.getId() + " at level " + currentNestingLevel);
+                                    // Get kids of current kid
+                                    workKidList = workItem.getKids();
+                                    if (workKidList != null && workKidList.size() > 0) {
+                                        totalKidsAdded += workKidList.size();
+                                        Log.d(TAG, "*** getItemKidsList: Added kids " + workKidList.size() + " for item " + workItem.getId() + " at level " + mRepository.getItemNestLevel(allItemList, workItem.getId()));
+                                        //updateKidNestLevel(itemList, workKidList, currentNestingLevel + 1);
+                                        // Add current kid's kids right after it to kid list
+                                        resultKidList.addAll(currentKidIndex + 1, workKidList);
+                                    }
+                                }
+                                // Move to next item in kid list
+                                // This might be recently added kid's kid
+                                currentKidIndex++;
+                            }
+                            while (currentKidIndex < resultKidList.size() /*|| currentKidIndex < 20*/);
+                        }
+
+                        //mListedItemIds.setValue(resultKidList);
+                    }
+                    Log.d(TAG, "**** ItemViewModel: reworked kid list size " + resultKidList.size());
                     MutableLiveData<List<Long>> resultLD = new MutableLiveData<>();
-                    resultLD.setValue(kidList);
+                    resultLD.setValue(resultKidList);
                     return resultLD;
                 }
         );
@@ -113,6 +165,8 @@ public class ItemViewModel extends AndroidViewModel {
                     return sortedListLD;
                 }
         );
+
+
     }
 
     /**

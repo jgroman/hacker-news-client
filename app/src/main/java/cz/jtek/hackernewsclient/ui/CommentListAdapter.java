@@ -24,6 +24,7 @@ import android.support.v7.recyclerview.extensions.ListAdapter;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.Spanned;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -99,9 +100,10 @@ public class CommentListAdapter extends ListAdapter<Item, CommentListAdapter.Com
     @Override
     public void onBindViewHolder(@NonNull CommentViewHolder holder, int position) {
         Item bindItem = getItem(position);
-
+        Log.d(TAG, "*** onBindViewHolder: binding " + bindItem.getId());
         if (!bindItem.getIsLoaded()) {
             // If item is not present in db yet, start loading from API
+            Log.d(TAG, "onBindViewHolder: bind load " + bindItem.getId());
             mItemModel.fetchItem(bindItem.getId());
         }
 
