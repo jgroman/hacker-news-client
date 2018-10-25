@@ -109,6 +109,10 @@ public class DataRepository {
         new LoadStoryListsTask(mApplication, mStoryListDao).execute();
     }
 
+    public LiveData<List<Item>> getAllItems() {
+        return mObservableItems;
+    }
+
     /**
      *
      * @return
@@ -187,8 +191,7 @@ public class DataRepository {
     }
 
 
-    public LiveData<List<Item>> getItemList(@NonNull List<Long> itemIds) {
-        Log.d(TAG, "getItemList: get list size " + itemIds.size());
+    public LiveData<List<Item>> getItemList(List<Long> itemIds) {
         return mItemDao.getItemsByIds(itemIds);
     }
 
@@ -200,8 +203,9 @@ public class DataRepository {
         List<Item> itemList = mObservableItems.getValue();
 
         Item item = Item.findItemInList(itemList, itemId);
-        if (item != null) {
-            // Item is already loaded in db
+
+        if (item != null && item.getIsLoaded()) {
+            // Item is present in db and loaded from API
             Log.d(TAG, "*** fetchItem: " + itemId + " found in cache");
             mItemsBeingLoaded.remove(itemId);
             return item;
