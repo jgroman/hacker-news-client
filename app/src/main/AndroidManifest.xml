@@ -28,6 +28,19 @@
 
         <activity android:name=".ui.CommentListActivity" />
 
+        <!-- Settings activity -->
+        <activity
+            android:name=".ui.SettingsActivity"
+            android:label="@string/action_settings"
+            android:parentActivityName=".ui.StoryListActivity"
+            >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".ui.StoryListActivity"
+                />
+        </activity>
+
+
     </application>
 
 </manifest>

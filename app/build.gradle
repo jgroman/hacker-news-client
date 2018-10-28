@@ -42,6 +42,10 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     // Recycler view
     implementation "com.android.support:recyclerview-v7:$androidSupportVersion"
+    // Preference fragment support
+    implementation "com.android.support:preference-v7:$androidSupportVersion"
+    // Chrome custom tabs
+    implementation "com.android.support:customtabs:$androidSupportVersion"
     // OkHttp http client
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
     // Stetho debug bridge

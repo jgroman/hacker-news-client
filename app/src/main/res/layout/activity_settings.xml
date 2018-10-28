@@ -16,22 +16,10 @@
      limitations under the License.
 -->
 
-<menu
+<fragment
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    >
-
-    <item
-        android:id="@+id/menu_item_refresh"
-        app:showAsAction="never"
-        android:title="@string/action_refresh"
-        />
-
-    <item
-        android:id="@+id/menu_item_settings"
-        android:orderInCategory="100"
-        app:showAsAction="never"
-        android:title="@string/action_settings"
-        />
-
-</menu>
+    android:id="@+id/activity_settings"
+    android:name="cz.jtek.hackernewsclient.ui.SettingsFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    />

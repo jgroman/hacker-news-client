@@ -20,21 +20,23 @@ import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.net.Uri;
 import android.support.annotation.NonNull;
-import android.support.design.widget.AppBarLayout;
+import android.support.customtabs.CustomTabsIntent;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.MenuItem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,7 +48,9 @@ import cz.jtek.hackernewsclient.data.StoryList;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
 public class StoryListActivity extends AppCompatActivity
-        implements StoryListFragment.OnStoryClickListener {
+        implements StoryListFragment.OnStoryClickListener,
+        SharedPreferences.OnSharedPreferenceChangeListener
+{
 
     @SuppressWarnings("unused")
     private static final String TAG = StoryListActivity.class.getSimpleName();
@@ -56,6 +60,13 @@ public class StoryListActivity extends AppCompatActivity
     private SwipeRefreshLayout mSwipeRefreshLayout;
 
     public StoryListViewModel mStoryListModel;
+
+    // Shared preferences
+    private SharedPreferences mPrefs;
+    private static boolean sPrefsUpdatedFlag = false;
+    private static final String PREF_KEY_CUSTOM_TABS = "pref_key_custom_tabs";
+    private Boolean mPrefUseCustomTabs;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,16 +89,17 @@ public class StoryListActivity extends AppCompatActivity
             mSwipeRefreshLayout.setRefreshing(false);
             mPagerAdapter.notifyDataSetChanged();
         };
-        // Observe all story list LiveData, on change update pager adapter
+        // -- Observe all story list LiveData, on change update pager adapter
         mStoryListModel.getAllStoryLists().observe(this, storiesObserver);
 
         // SwipeRefreshLayout
         mSwipeRefreshLayout = findViewById(R.id.srl_story_list);
         mSwipeRefreshLayout.setOnRefreshListener(this::refreshLayout);
 
-        //Toolbar
+        // Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar_story_list);
         toolbar.inflateMenu(R.menu.menu_story_list);
+        // -- Menu
         toolbar.setOnMenuItemClickListener(menuItem -> {
             switch (menuItem.getItemId()) {
                 case R.id.menu_item_refresh:
@@ -95,9 +107,20 @@ public class StoryListActivity extends AppCompatActivity
                     mSwipeRefreshLayout.setRefreshing(true);
                     refreshLayout();
                     return true;
+                case R.id.menu_item_settings:
+                    // Open Settings
+                    Intent startSettingsActivity = new Intent(this, SettingsActivity.class);
+                    startActivity(startSettingsActivity);
+                    return true;
             }
             return false;
         });
+
+        // Shared Preferences and preference change listener
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        mPrefs.registerOnSharedPreferenceChangeListener(this);
+        // -- Obtain current custom tabs status from shared preferences
+        mPrefUseCustomTabs = mPrefs.getBoolean(PREF_KEY_CUSTOM_TABS, true);
 
     }
 
@@ -122,10 +145,34 @@ public class StoryListActivity extends AppCompatActivity
     public void onStoryLongPressed(Item item) {
         // Open story URL
         Uri itemUri = Uri.parse(item.getUrl());
-        Intent intent = new Intent(Intent.ACTION_VIEW, itemUri);
-        if (intent.resolveActivity(getPackageManager()) != null) {
-            startActivity(intent);
+
+        Boolean useCustomTabs = mPrefs.getBoolean(PREF_KEY_CUSTOM_TABS, true);
+        if (useCustomTabs) {
+            CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
+            // set toolbar color and/or setting custom actions before invoking build()
+            builder.setToolbarColor(ContextCompat.getColor(this, R.color.colorPrimary));
+            // Once ready, call CustomTabsIntent.Builder.build() to create a CustomTabsIntent
+            CustomTabsIntent customTabsIntent = builder.build();
+            // and launch the desired Url with CustomTabsIntent.launchUrl()
+            customTabsIntent.launchUrl(this, itemUri);
         }
+        else {
+            Intent intent = new Intent(Intent.ACTION_VIEW, itemUri);
+            if (intent.resolveActivity(getPackageManager()) != null) {
+                startActivity(intent);
+            }
+        }
+    }
+
+    /**
+     * Shared preference change listener, nn preference change sets global flag
+     *
+     * @param sharedPreferences Shared preferences
+     * @param key               Changed preference key
+     */
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        sPrefsUpdatedFlag = true;
     }
 
     /**
