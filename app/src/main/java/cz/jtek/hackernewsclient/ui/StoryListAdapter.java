@@ -22,7 +22,6 @@ import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
 import android.support.v7.recyclerview.extensions.ListAdapter;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,6 +38,7 @@ public class StoryListAdapter extends ListAdapter<Item, StoryListAdapter.StoryVi
 
     public interface StoryListOnClickListener {
         void onClick(long itemId);
+        void onLongClick(Item item);
     }
 
     private final StoryListOnClickListener mClickListener;
@@ -52,7 +52,9 @@ public class StoryListAdapter extends ListAdapter<Item, StoryListAdapter.StoryVi
         mClickListener = clickListener;
     }
 
-    public class StoryViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public class StoryViewHolder
+            extends RecyclerView.ViewHolder
+            implements View.OnClickListener, View.OnLongClickListener {
 
         // Binding class name is generated from layout filename: item_story.xml
         private ItemStoryBinding binding;
@@ -67,6 +69,7 @@ public class StoryListAdapter extends ListAdapter<Item, StoryListAdapter.StoryVi
             super(view);
             binding = DataBindingUtil.bind(view);
             view.setOnClickListener(this);
+            view.setOnLongClickListener(this);
         }
 
         void bind(Item item) {
@@ -84,6 +87,19 @@ public class StoryListAdapter extends ListAdapter<Item, StoryListAdapter.StoryVi
             int itemPos = getAdapterPosition();
             Item item = getItem(itemPos);
             mClickListener.onClick(item.getId());
+        }
+
+        /**
+         * Local OnLongClick listener
+         *
+         * @param view View that was long clicked on
+         * @return Callback consumed long click
+         */
+        @Override
+        public boolean onLongClick(View view) {
+            int itemPos = getAdapterPosition();
+            mClickListener.onLongClick(getItem(itemPos));
+            return true;
         }
     }
 

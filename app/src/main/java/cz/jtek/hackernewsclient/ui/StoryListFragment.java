@@ -63,6 +63,7 @@ public class StoryListFragment extends Fragment
     // Custom OnStoryClickListener interface, must be implemented by container activity
     public interface OnStoryClickListener {
         void onStorySelected(long itemId);
+        void onStoryLongPressed(Item item);
     }
 
     // This is a callback to onStorySelected in container activity
@@ -183,6 +184,12 @@ public class StoryListFragment extends Fragment
     public void onClick(long itemId) {
         // OnClick event is passed to activity
         mStoryClickListenerCallback.onStorySelected(itemId);
+    }
+
+    @Override
+    public void onLongClick(Item item) {
+        // Long click is passed to activity
+        mStoryClickListenerCallback.onStoryLongPressed(item);
     }
 
     public String getStoryType() {

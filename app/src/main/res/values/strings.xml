@@ -7,5 +7,8 @@
     <string name="story_title_best">Best</string>
     <string name="story_string_best" translatable="false">best</string>
 
+    <!-- Menu -->
+    <string name="action_refresh">Refresh</string>
+    <string name="action_article">Article</string>
 
 </resources>

@@ -18,11 +18,15 @@ package cz.jtek.hackernewsclient.ui;
 
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.MenuItem;
 
 import cz.jtek.hackernewsclient.R;
 import cz.jtek.hackernewsclient.data.Item;
@@ -39,6 +43,8 @@ public class CommentListActivity extends AppCompatActivity
 
     private CollapsingToolbarLayout mToolbarLayout;
     private Toolbar mToolbar;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
+
 
     private ItemViewModel mItemModel;
 
@@ -74,13 +80,33 @@ public class CommentListActivity extends AppCompatActivity
         Item parentStoryItem = mItemModel.fetchItem(mStoryId);
 
         mToolbarLayout = findViewById(R.id.ctl_story);
-        mToolbar = findViewById(R.id.toolbar_story);
 
-        // Back navigation
+        // Toolbar
+        mToolbar = findViewById(R.id.toolbar_story);
+        mToolbar.setTitle(parentStoryItem.getTitle());
+        // -- Back navigation
         mToolbar.setNavigationIcon(R.drawable.ic_arrow_back_white_24dp);
         mToolbar.setNavigationOnClickListener(v -> finish());
+        // -- Menu
+        mToolbar.inflateMenu(R.menu.menu_comment_list);
+        mToolbar.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.menu_item_article:
+                    // Open parent story URL
+                    openUrl(mItemModel.fetchItem(mStoryId).getUrl());
+                    return true;
+                case R.id.menu_item_refresh:
+                    // Refresh content
+                    mSwipeRefreshLayout.setRefreshing(true);
+                    refreshLayout();
+                    return true;
+            }
+            return false;
+        });
 
-        mToolbar.setTitle(parentStoryItem.getTitle());
+        // SwipeRefreshLayout
+        mSwipeRefreshLayout = findViewById(R.id.srl_comment_list);
+        mSwipeRefreshLayout.setOnRefreshListener(this::refreshLayout);
 
         // Create comment list fragment
         CommentListFragment commentListFragment = CommentListFragment.newInstance(mStoryId);
@@ -89,6 +115,18 @@ public class CommentListActivity extends AppCompatActivity
                 .commit();
     }
 
+    private void refreshLayout() {
+        // TODO
+        mSwipeRefreshLayout.setRefreshing(false);
+    }
+
+    public void openUrl(String url) {
+        Uri uri = Uri.parse(url);
+        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        }
+    }
 
     /**
      * Comment click listener

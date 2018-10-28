@@ -21,6 +21,7 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.TabLayout;
@@ -28,8 +29,10 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -37,6 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import cz.jtek.hackernewsclient.R;
+import cz.jtek.hackernewsclient.data.Item;
 import cz.jtek.hackernewsclient.data.StoryList;
 import cz.jtek.hackernewsclient.model.StoryListViewModel;
 
@@ -48,6 +52,7 @@ public class StoryListActivity extends AppCompatActivity
 
     private ViewPager mViewPager;
     public StoryTypeTabsAdapter mPagerAdapter;
+    private SwipeRefreshLayout mSwipeRefreshLayout;
 
     public StoryListViewModel mStoryListModel;
 
@@ -57,7 +62,7 @@ public class StoryListActivity extends AppCompatActivity
         setContentView(R.layout.activity_story_list);
 
         TabLayout tabLayout = findViewById(R.id.tablayout_story_type);
-        AppBarLayout appbarLayout = findViewById(R.id.appbar_story_list);
+        //AppBarLayout appbarLayout = findViewById(R.id.appbar_story_list);
 
         mViewPager = findViewById(R.id.viewpager_story_list);
         mPagerAdapter = new StoryTypeTabsAdapter(getSupportFragmentManager(), this);
@@ -71,10 +76,24 @@ public class StoryListActivity extends AppCompatActivity
             Log.d(TAG, "*** onChanged: stories, updating pager adapter");
             mPagerAdapter.notifyDataSetChanged();
         };
-        // Observe the LiveData, on change update pager adapter
+        // Observe all story list LiveData, on change update pager adapter
         mStoryListModel.getAllStoryLists().observe(this, storiesObserver);
+
+        // SwipeRefreshLayout
+        mSwipeRefreshLayout = findViewById(R.id.srl_story_list);
+        mSwipeRefreshLayout.setOnRefreshListener(this::refreshLayout);
+
+        //Toolbar
+        Toolbar toolbar = findViewById(R.id.toolbar_story_list);
+        toolbar.inflateMenu(R.menu.menu_story_list);
+
     }
 
+    /**
+     * Story item click handler
+     *
+     * @param itemId Id of clicked item
+     */
     @Override
     public void onStorySelected(long itemId) {
         // Starting CommentListActivity
@@ -83,7 +102,27 @@ public class StoryListActivity extends AppCompatActivity
     }
 
     /**
+     * Story item long click handler
      *
+     * @param item Long clicked item instance
+     */
+    @Override
+    public void onStoryLongPressed(Item item) {
+        // Open story URL
+        Uri itemUri = Uri.parse(item.getUrl());
+        Intent intent = new Intent(Intent.ACTION_VIEW, itemUri);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        }
+    }
+
+    private void refreshLayout() {
+        // TODO
+        mSwipeRefreshLayout.setRefreshing(false);
+    }
+
+    /**
+     * This pager adapter displays each type of story in a separate tab
      */
     private class StoryTypeTabsAdapter extends FragmentPagerAdapter {
 

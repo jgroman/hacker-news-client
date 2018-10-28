@@ -54,7 +54,9 @@ public class CommentListAdapter extends ListAdapter<Item, CommentListAdapter.Com
         mClickListener = clickListener;
     }
 
-    public class CommentViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+    public class CommentViewHolder
+            extends RecyclerView.ViewHolder
+            implements View.OnClickListener {
 
         // Binding class name is generated from layout filename: item_comment.xml
         private ItemCommentBinding binding;
