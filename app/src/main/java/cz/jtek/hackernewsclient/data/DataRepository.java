@@ -20,7 +20,6 @@ import android.app.Application;
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MediatorLiveData;
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
 import android.util.Log;
 
 import java.io.IOException;
@@ -57,9 +56,9 @@ public class DataRepository {
     /**
      * Returns repository singleton instance
      *
-     * @param app
-     * @param database
-     * @return
+     * @param app Application
+     * @param database AppDatabase
+     * @return Repository singleton
      */
     public static DataRepository getInstance(Application app, final AppDatabase database) {
         if (sInstance == null) {
@@ -75,8 +74,8 @@ public class DataRepository {
     /**
      * Constructor
      *
-     * @param application
-     * @param db
+     * @param application Application
+     * @param db AppDatabase
      */
     private DataRepository(Application application, AppDatabase db) {
         mApplication = application;
@@ -106,6 +105,13 @@ public class DataRepository {
         mItemsBeingLoaded = new ArrayList<>();
 
         // Start loading story lists
+        loadStoryLists();
+    }
+
+    /**
+     * Loads all story lists from API, replaces old lists
+     */
+    public void loadStoryLists() {
         new LoadStoryListsTask(mApplication, mStoryListDao).execute();
     }
 
@@ -184,7 +190,7 @@ public class DataRepository {
                 }
 
                 // Insert story to db
-                mStoryListDao.insert(resultStoryList);
+                mStoryListDao.insertReplace(resultStoryList);
             }
             return null;
         }

@@ -34,6 +34,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,9 +72,10 @@ public class StoryListActivity extends AppCompatActivity
 
         mStoryListModel = ViewModelProviders.of(this).get(StoryListViewModel.class);
 
-        // Create the observer for stories which updates the UI
+        // Observer for story lists updates the UI on list change
         final Observer<List<StoryList>> storiesObserver = storyLists -> {
             Log.d(TAG, "*** onChanged: stories, updating pager adapter");
+            mSwipeRefreshLayout.setRefreshing(false);
             mPagerAdapter.notifyDataSetChanged();
         };
         // Observe all story list LiveData, on change update pager adapter
@@ -86,6 +88,16 @@ public class StoryListActivity extends AppCompatActivity
         //Toolbar
         Toolbar toolbar = findViewById(R.id.toolbar_story_list);
         toolbar.inflateMenu(R.menu.menu_story_list);
+        toolbar.setOnMenuItemClickListener(menuItem -> {
+            switch (menuItem.getItemId()) {
+                case R.id.menu_item_refresh:
+                    // Reload stories from API
+                    mSwipeRefreshLayout.setRefreshing(true);
+                    refreshLayout();
+                    return true;
+            }
+            return false;
+        });
 
     }
 
@@ -116,9 +128,12 @@ public class StoryListActivity extends AppCompatActivity
         }
     }
 
+    /**
+     * Reloads story lists content from API
+     * Observer will update the UI
+     */
     private void refreshLayout() {
-        // TODO
-        mSwipeRefreshLayout.setRefreshing(false);
+        mStoryListModel.loadStoryLists();
     }
 
     /**

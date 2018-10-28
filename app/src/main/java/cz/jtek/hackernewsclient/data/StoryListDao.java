@@ -28,7 +28,7 @@ import java.util.List;
 public interface StoryListDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insert(StoryList storyList);
+    void insertReplace(StoryList storyList);
 
     @Query("SELECT * FROM " + StoryList.TABLE_NAME)
     LiveData<List<StoryList>> getAllStoryLists();

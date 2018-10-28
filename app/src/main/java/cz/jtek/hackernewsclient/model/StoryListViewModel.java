@@ -52,6 +52,13 @@ public class StoryListViewModel extends AndroidViewModel {
     }
 
     /**
+     * Loads all story lists from API, replaces old lists
+     */
+    public void loadStoryLists() {
+        mRepository.loadStoryLists();
+    }
+
+    /**
      * Expose the LiveData Stories query so the UI can observe it.
      */
     public LiveData<List<StoryList>> getAllStoryLists() {
