@@ -19,4 +19,8 @@
     <!-- Accessibility -->
     <string name="logo_description">Hacker News Logo</string>
 
+    <!-- Widget -->
+    <string name="widget_title_story_list">HN - New Stories</string>
+    <string name="widget_no_stories">No stories available</string>
+
 </resources>

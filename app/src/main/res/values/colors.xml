@@ -11,4 +11,7 @@
 
     <color name="colorItemBackground">#F6F6EF</color>
 
+    <color name="colorWidgetTitle">#BBBBBB</color>
+    <color name="colorWidgetText">#BBBBBB</color>
+
 </resources>
