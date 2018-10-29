@@ -16,4 +16,7 @@
     <string name="pref_custom_tabs_title">Chrome Custom Tabs</string>
     <string name="pref_custom_tabs_summary">Use Chrome Custom Tabs</string>
 
+    <!-- Accessibility -->
+    <string name="logo_description">Hacker News Logo</string>
+
 </resources>

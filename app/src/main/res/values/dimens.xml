@@ -21,12 +21,12 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
 
     <!-- StoryList list -->
-    <dimen name="list_ctl_height">100dp</dimen>
+    <dimen name="ctl_story_list_height">60dp</dimen>
     <dimen name="list_title_text_size">32sp</dimen>
 
-    <!-- StoryList -->
-    <dimen name="story_ctl_height">80dp</dimen>
-    <dimen name="story_title_text_size">32sp</dimen>
+    <!-- Comment list -->
+    <dimen name="ctl_comment_list_height">10dp</dimen>
+    <dimen name="story_title_text_size">28sp</dimen>
 
 
 </resources>

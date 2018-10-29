@@ -73,7 +73,7 @@ public class StoryListActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_story_list);
 
-        TabLayout tabLayout = findViewById(R.id.tablayout_story_type);
+        TabLayout tabLayout = findViewById(R.id.tablayout_story_list);
         //AppBarLayout appbarLayout = findViewById(R.id.appbar_story_list);
 
         mViewPager = findViewById(R.id.viewpager_story_list);
